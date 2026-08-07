@@ -1,0 +1,110 @@
+:root {
+  font-family: Inter, "Segoe UI Variable", "Segoe UI", sans-serif;
+  color: #e9f1f5;
+  background: #080b10;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --bg: #080b10;
+  --surface: #10151d;
+  --surface-raised: #151c26;
+  --surface-soft: #1b2430;
+  --line: #26313e;
+  --line-soft: rgba(143, 169, 186, 0.14);
+  --text: #e9f1f5;
+  --text-muted: #8fa2af;
+  --text-faint: #657785;
+  --accent: #45d6e8;
+  --accent-rgb: 69, 214, 232;
+  --warm: #ffb45e;
+  --coral: #dd765f;
+  --success: #8bdc7c;
+  --danger: #ff786f;
+  --radius: 6px;
+  --section-gap: 30px;
+  --page-pad: 36px;
+}
+
+:root[data-accent="coral"] {
+  --accent: #ff7a6f;
+  --accent-rgb: 255, 122, 111;
+}
+
+:root[data-accent="lime"] {
+  --accent: #9fe870;
+  --accent-rgb: 159, 232, 112;
+}
+
+:root[data-theme="light"] {
+  --bg: #edf1f3;
+  --surface: #f7f9fa;
+  --surface-raised: #ffffff;
+  --surface-soft: #dfe6ea;
+  --line: #c7d1d7;
+  --line-soft: rgba(25, 45, 57, 0.12);
+  --text: #111a21;
+  --text-muted: #526570;
+  --text-faint: #6c7d87;
+}
+
+:root[data-font="condensed"] {
+  font-family: "Arial Narrow", "Roboto Condensed", "Segoe UI", sans-serif;
+}
+
+:root[data-font="rounded"] {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+:root[data-density="compact"] {
+  --section-gap: 22px;
+  --page-pad: 28px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  color: var(--bg);
+  background: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
