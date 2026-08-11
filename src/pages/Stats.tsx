@@ -1,57 +1,201 @@
-import { CalendarDays, Clock3, Gamepad2, Signal, TrendingUp } from "lucide-react";
+import { Download } from "lucide-react";
+import { useMemo, useState } from "react";
+import type { ExportFormat } from "../contracts/entities";
+import {
+  dailyPlaytime,
+  distinctGamesPlayed,
+  filterByAccount,
+  formatCount,
+  playtimeByGame,
+  splitDuration,
+  totalPlaytimeSeconds,
+} from "../domain/stats";
+import { useI18n } from "../i18n";
+import { isTauri, toBackendError } from "../services/backend";
 import { useAppStore } from "../state/AppStore";
+import { Sparkline } from "../components/Sparkline";
 
-export function Stats() {
-  const { state } = useAppStore();
-  const totalMinutes = state.sessions.reduce((sum, session) => sum + session.durationMinutes, 0);
-  const averageFps = Math.round(state.sessions.reduce((sum, session) => sum + session.avgFps, 0) / state.sessions.length);
-  const averagePing = Math.round(state.sessions.reduce((sum, session) => sum + session.ping, 0) / state.sessions.length);
-  const maxDuration = Math.max(...state.sessions.map((session) => session.durationMinutes));
+/** Tab accent colors, matching the stats mockup. */
+const ALL_TAB_COLOR = "#F2557A";
+const PROFILE_TAB_COLOR = "#F58A24";
+
+export function StatsPage() {
+  const { t, locale, translateError } = useI18n();
+  const { state, backend } = useAppStore();
+  const [scope, setScope] = useState<"all" | "account">("all");
+  const [notice, setNotice] = useState<{ text: string; tone: "ok" | "error" } | null>(
+    null,
+  );
+
+  /**
+   * Asks for a destination, then hands the path to Rust to write.
+   *
+   * The user picks the file themselves; Revox never writes anywhere it was not
+   * pointed at, and nothing leaves the machine.
+   */
+  async function exportAs(format: ExportFormat) {
+    setNotice(null);
+    try {
+      let path: string | null = null;
+      if (isTauri()) {
+        const { save } = await import("@tauri-apps/plugin-dialog");
+        path = await save({
+          defaultPath: `revox-sessions.${format}`,
+          filters: [{ name: format.toUpperCase(), extensions: [format] }],
+        });
+        if (!path) return;
+      }
+      const written = await backend.exportSessions(format, path ?? `revox-sessions.${format}`);
+      setNotice({ tone: "ok", text: t("settings.exportDone", { path: written }) });
+    } catch (reason) {
+      const failure = toBackendError(reason);
+      setNotice({ tone: "error", text: translateError(failure.code, failure.message) });
+    }
+  }
+
+  const activeAccount = state.accounts.find(
+    (account) => account.id === state.settings.selectedAccountId,
+  );
+  const scoped = scope === "account" && activeAccount ? activeAccount.id : null;
+
+  const sessions = useMemo(
+    () => filterByAccount(state.sessions, scoped),
+    [scoped, state.sessions],
+  );
+
+  const total = splitDuration(totalPlaytimeSeconds(sessions));
+  const buckets = dailyPlaytime(sessions, 14);
+  const topGames = playtimeByGame(sessions).slice(0, 5);
+  const peakSeconds = topGames[0]?.seconds ?? 0;
 
   return (
-    <div className="page">
-      <section className="page-heading split-heading">
-        <div><p className="eyebrow">LETZTE 7 TAGE</p><h1>Deine Spielwoche</h1><p>Lokale Beispielwerte zeigen, wie der spätere Session-Bericht aussehen wird.</p></div>
-        <button className="secondary-button"><CalendarDays size={18} /> 29. Juli – 4. August</button>
-      </section>
-
-      <section className="metric-grid">
-        <article><span><Clock3 size={18} /> Spielzeit</span><strong>{Math.floor(totalMinutes / 60)}<small> Std.</small></strong><p>+12% zur Vorwoche</p></article>
-        <article><span><Gamepad2 size={18} /> Sessions</span><strong>{state.sessions.length}</strong><p>3 Spiele gestartet</p></article>
-        <article><span><TrendingUp size={18} /> Ø Bildrate</span><strong>{averageFps}<small> FPS</small></strong><p>stabiler Verlauf</p></article>
-        <article><span><Signal size={18} /> Ø Ping</span><strong>{averagePing}<small> ms</small></strong><p>gute Verbindung</p></article>
-      </section>
-
-      <section className="stats-layout">
-        <article className="chart-panel">
-          <div className="section-heading"><div><p className="eyebrow">SPIELZEIT</p><h2>Rhythmus der Woche</h2></div><span className="legend-mark">Minuten</span></div>
-          <div className="bar-chart" aria-label="Spielzeit pro Tag">
-            {state.sessions.map((session) => (
-              <div key={session.id} className="bar-column">
-                <span>{session.durationMinutes}</span>
-                <i style={{ height: `${(session.durationMinutes / maxDuration) * 100}%` }} />
-                <small>{session.date.split(" ")[0]}</small>
-              </div>
-            ))}
-          </div>
-        </article>
-        <article className="game-share-panel">
-          <div><p className="eyebrow">MEISTGESPIELT</p><h2>DOORS</h2><p>281 Minuten diese Woche</p></div>
-          <div className="ring-chart"><span><strong>42%</strong><small>deiner Zeit</small></span></div>
-          <div className="share-list"><span><i className="cyan" /> DOORS <b>42%</b></span><span><i className="amber" /> Brookhaven <b>29%</b></span><span><i className="coral" /> Andere <b>29%</b></span></div>
-        </article>
-      </section>
-
-      <section className="session-table-section">
-        <div className="section-heading"><div><p className="eyebrow">VERLAUF</p><h2>Letzte Sessions</h2></div></div>
-        <div className="session-table" role="table">
-          <div className="session-row table-head" role="row"><span>Spiel</span><span>Datum</span><span>Dauer</span><span>Ø FPS</span><span>Ping</span></div>
-          {state.sessions.slice().reverse().slice(0, 5).map((session) => {
-            const game = state.games.find((entry) => entry.id === session.gameId)!;
-            return <div className="session-row" role="row" key={session.id}><span><i style={{ backgroundImage: `url(${game.thumbnail})`, backgroundPosition: game.coverPosition }} />{game.title}</span><span>{session.date}</span><span>{session.durationMinutes} Min.</span><span>{session.avgFps}</span><span>{session.ping} ms</span></div>;
-          })}
+    <div className="rv-page">
+      <div className="rv-section-head">
+        <div className="rv-tabs">
+          <button
+            className="rv-tab"
+            style={{ ["--tab-color" as string]: ALL_TAB_COLOR }}
+            aria-pressed={scope === "all"}
+            onClick={() => setScope("all")}
+          >
+            {t("stats.all")}
+          </button>
+          {activeAccount && (
+            <button
+              className="rv-tab"
+              style={{ ["--tab-color" as string]: PROFILE_TAB_COLOR }}
+              aria-pressed={scope === "account"}
+              onClick={() => setScope("account")}
+            >
+              {activeAccount.username}
+            </button>
+          )}
         </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            className="rv-button"
+            onClick={() => void exportAs("csv")}
+            disabled={sessions.length === 0}
+          >
+            <Download size={15} />
+            {t("settings.exportCsv")}
+          </button>
+          <button
+            className="rv-button"
+            onClick={() => void exportAs("json")}
+            disabled={sessions.length === 0}
+          >
+            <Download size={15} />
+            {t("settings.exportJson")}
+          </button>
+        </div>
+      </div>
+
+      {notice && (
+        <p className={notice.tone === "error" ? "rv-error-text" : "rv-note"}>
+          {notice.text}
+        </p>
+      )}
+
+      <section className="rv-stat-tiles">
+        <article className="rv-stat-tile">
+          <p className="rv-stat-value">
+            {`${total.hours}h`}
+            <small>{t("stats.playtime")}</small>
+          </p>
+          <p>{t("stats.minutes", { count: total.minutes })}</p>
+        </article>
+
+        <article className="rv-stat-tile">
+          <p className="rv-stat-value">{distinctGamesPlayed(sessions)}</p>
+          <p>{t("stats.differentGames")}</p>
+        </article>
+
+        <article className="rv-stat-tile">
+          <p className="rv-stat-value">
+            {formatCount(state.settings.robuxSpent, locale)}
+          </p>
+          <p>{t("stats.robuxSpent")}</p>
+          <p className="rv-hint">{t("stats.robuxHint")}</p>
+        </article>
       </section>
+
+      <section className="rv-chart-panel">
+        <div className="rv-section-head">
+          <h2>{t("stats.chartTitle")}</h2>
+          <span style={{ color: "var(--rv-text-faint)", fontSize: 11 }}>
+            {t("stats.chartMinutes")}
+          </span>
+        </div>
+
+        {sessions.length === 0 ? (
+          <div className="rv-empty">
+            <strong>{t("stats.noData")}</strong>
+            <p>{t("stats.noDataBody")}</p>
+          </div>
+        ) : (
+          <div className="rv-chart">
+            <Sparkline
+              buckets={buckets}
+              emptyLabel={t("stats.noData")}
+              height={200}
+              label={t("stats.chartTitle")}
+            />
+          </div>
+        )}
+      </section>
+
+      {topGames.length > 0 && (
+        <section className="rv-chart-panel">
+          <div className="rv-section-head">
+            <h2>{t("stats.topGames")}</h2>
+          </div>
+          <div className="rv-top-games">
+            {topGames.map((entry) => {
+              const game = state.games.find((candidate) => candidate.id === entry.gameId);
+              const { hours, minutes } = splitDuration(entry.seconds);
+              return (
+                <div className="rv-top-game" key={entry.gameId}>
+                  <span>{game?.name ?? entry.gameId}</span>
+                  <b>
+                    {hours > 0
+                      ? t("stats.hours", { count: hours })
+                      : t("stats.minutes", { count: minutes })}
+                  </b>
+                  <span className="rv-meter">
+                    <i
+                      style={{
+                        width: `${peakSeconds > 0 ? (entry.seconds / peakSeconds) * 100 : 0}%`,
+                      }}
+                    />
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

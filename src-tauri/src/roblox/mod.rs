@@ -1,3 +1,6 @@
+pub mod account;
+pub mod system;
+
 use std::path::PathBuf;
 
 use crate::{
@@ -12,6 +15,9 @@ pub struct ProcessIdentity {
     pub executable: Option<PathBuf>,
 }
 
+/// The operating-system surface Revox needs in order to find and start the
+/// official Roblox client. Isolating it behind a trait keeps the detection
+/// rules testable without a real Windows box.
 pub trait RobloxSystem {
     fn protocol_command(&self) -> Result<Option<String>, AppError>;
     fn known_installations(&self) -> Result<Vec<PathBuf>, AppError>;
@@ -43,9 +49,7 @@ pub fn detect_roblox(system: &impl RobloxSystem) -> RobloxStatus {
         Ok(installations) => installations,
         Err(error) => return check_failed(error),
     };
-    let installation_path = installations
-        .first()
-        .map(|path| path.display().to_string());
+    let installation_path = installations.first().map(|path| path.display().to_string());
 
     if protocol.is_some() || installation_path.is_some() {
         RobloxStatus {
@@ -62,9 +66,14 @@ pub fn detect_roblox(system: &impl RobloxSystem) -> RobloxStatus {
     }
 }
 
-pub fn launch_official(
-    system: &impl RobloxSystem,
+/// Builds the official protocol URL for a place, optionally targeting one
+/// specific server instance.
+///
+/// Both parts are validated before they reach the URL, so nothing a user typed
+/// or a Roblox response contained can add further parameters to it.
+pub fn build_launch_uri(
     place_id: &str,
+    game_instance_id: Option<&str>,
 ) -> Result<String, AppError> {
     if !valid_place_id(place_id) {
         return Err(AppError::new(
@@ -72,7 +81,24 @@ pub fn launch_official(
             "Place ID must contain 1 to 20 ASCII digits",
         ));
     }
-    let uri = format!("roblox://placeId={place_id}");
+    match game_instance_id {
+        None => Ok(format!("roblox://placeId={place_id}")),
+        Some(instance) if valid_instance_id(instance) => Ok(format!(
+            "roblox://placeId={place_id}&gameInstanceId={instance}"
+        )),
+        Some(_) => Err(AppError::new(
+            "INVALID_INSTANCE_ID",
+            "A server instance ID must be a UUID",
+        )),
+    }
+}
+
+pub fn launch_official(
+    system: &impl RobloxSystem,
+    place_id: &str,
+    game_instance_id: Option<&str>,
+) -> Result<String, AppError> {
+    let uri = build_launch_uri(place_id, game_instance_id)?;
     system.open_uri(&uri)?;
     Ok(uri)
 }
@@ -81,6 +107,36 @@ pub fn valid_place_id(place_id: &str) -> bool {
     !place_id.is_empty()
         && place_id.len() <= 20
         && place_id.bytes().all(|byte| byte.is_ascii_digit())
+}
+
+/// Roblox server instance IDs are UUIDs in the canonical 8-4-4-4-12 form.
+pub fn valid_instance_id(value: &str) -> bool {
+    let groups: Vec<&str> = value.split('-').collect();
+    groups.len() == 5
+        && [8usize, 4, 4, 4, 12]
+            .iter()
+            .zip(&groups)
+            .all(|(expected, group)| {
+                group.len() == *expected
+                    && group.bytes().all(|byte| byte.is_ascii_hexdigit())
+            })
+}
+
+/// Process names that count as "Roblox is playing right now".
+///
+/// Roblox Studio is deliberately excluded: having Studio open is not a play
+/// session and must not start the session clock.
+pub const PLAYER_PROCESS_NAMES: &[&str] = &[
+    "robloxplayerbeta.exe",
+    "robloxplayerbeta",
+    "windows10universal.exe",
+];
+
+pub fn is_player_process(name: &str) -> bool {
+    let lowered = name.to_lowercase();
+    PLAYER_PROCESS_NAMES
+        .iter()
+        .any(|candidate| lowered == *candidate)
 }
 
 fn check_failed(error: AppError) -> RobloxStatus {

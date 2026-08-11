@@ -1,29 +1,29 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Rift Companion",
-  "version": "0.2.0",
-  "identifier": "app.rift.robloxcompanion",
+  "productName": "Revox Client",
+  "version": "0.4.0",
+  "identifier": "app.revox.client",
   "build": {
-    "beforeDevCommand": "npm.cmd run dev",
+    "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm.cmd run build",
+    "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "Rift Companion",
+        "title": "Revox Client",
         "width": 1440,
         "height": 900,
-        "minWidth": 980,
+        "minWidth": 1040,
         "minHeight": 680,
-        "decorations": true,
+        "decorations": false,
         "transparent": false,
         "resizable": true
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' https://images.unsplash.com data:; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost"
+      "csp": "default-src 'self'; img-src 'self' https://tr.rbxcdn.com https://t0.rbxcdn.com https://t1.rbxcdn.com https://t2.rbxcdn.com https://t3.rbxcdn.com https://t4.rbxcdn.com https://t5.rbxcdn.com https://t6.rbxcdn.com https://t7.rbxcdn.com data:; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost"
     }
   },
   "bundle": {
@@ -33,8 +33,14 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "languages": ["German", "English"],
-        "displayLanguageSelector": true
+        "languages": [
+          "German",
+          "English"
+        ],
+        "displayLanguageSelector": true,
+        "headerImage": "installer/header.bmp",
+        "sidebarImage": "installer/sidebar.bmp",
+        "installerIcon": "icons/icon.ico"
       }
     },
     "icon": [

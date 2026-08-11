@@ -1,13 +1,23 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default capability for the main window",
+  "description": "Default capability for the Revox main window",
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-is-maximized",
+    "core:window:allow-close",
+    "core:window:allow-hide",
+    "core:window:allow-show",
+    "core:window:allow-set-focus",
+    "core:window:allow-start-dragging",
     "dialog:default",
     "fs:default",
     "opener:default",
-    "sql:default"
+    "sql:default",
+    "notification:default",
+    "updater:default"
   ]
 }

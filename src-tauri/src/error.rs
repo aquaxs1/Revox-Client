@@ -1,7 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
+/// A typed, serializable error that crosses the Tauri boundary.
+///
+/// Every failing command returns one of these so the UI can react to `code`
+/// and show the localized message that belongs to it.
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq, thiserror::Error)]
+#[error("{code}: {message}")]
 pub struct AppError {
     pub code: String,
     pub message: String,

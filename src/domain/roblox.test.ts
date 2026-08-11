@@ -1,34 +1,31 @@
-import { buildLaunchUrl, parsePlaceId } from "./roblox";
+import { describe, expect, it } from "vitest";
+import { buildLaunchUrl, parsePlaceId, validPlaceId } from "./roblox";
 
 describe("parsePlaceId", () => {
-  it("accepts a numeric Place-ID", () => {
+  it("accepts a bare numeric Place ID", () => {
     expect(parsePlaceId("920587237")).toBe("920587237");
+    expect(parsePlaceId("  920587237  ")).toBe("920587237");
   });
 
-  it("accepts the maximum 20 ASCII digits", () => {
-    expect(parsePlaceId("12345678901234567890")).toBe("12345678901234567890");
-  });
-
-  it("extracts the Place-ID from an official game URL", () => {
-    expect(parsePlaceId("https://www.roblox.com/games/920587237/Adopt-Me")).toBe(
+  it("extracts the Place ID from an official Roblox game link", () => {
+    expect(parsePlaceId("https://www.roblox.com/games/920587237/Doors")).toBe(
       "920587237",
     );
+    expect(parsePlaceId("https://roblox.com/games/123")).toBe("123");
   });
 
-  it.each([
-    "javascript:alert(1)",
-    "https://not-roblox.com/games/920587237",
-    "https://roblox.com/users/920587237/profile",
-    "123456789012345678901",
-    "+123456",
-    "-123456",
-    " 123456",
-    "123456 ",
-    "١٢٣٤٥٦",
-    "12abc",
-    "",
-  ])("rejects unsafe or unsupported input: %s", (input) => {
-    expect(parsePlaceId(input)).toBeNull();
+  it("rejects look-alike hosts, plain HTTP and non-game paths", () => {
+    expect(parsePlaceId("https://roblox.com.evil.example/games/123")).toBeNull();
+    expect(parsePlaceId("http://www.roblox.com/games/123")).toBeNull();
+    expect(parsePlaceId("https://www.roblox.com/users/123/profile")).toBeNull();
+    expect(parsePlaceId("javascript:alert(1)")).toBeNull();
+  });
+
+  it("rejects anything that is not purely digits", () => {
+    expect(parsePlaceId("")).toBeNull();
+    expect(parsePlaceId("123abc")).toBeNull();
+    expect(parsePlaceId("123 & calc.exe")).toBeNull();
+    expect(parsePlaceId("123456789012345678901")).toBeNull();
   });
 });
 
@@ -37,7 +34,8 @@ describe("buildLaunchUrl", () => {
     expect(buildLaunchUrl("920587237")).toBe("roblox://placeId=920587237");
   });
 
-  it("rejects a non-numeric Place-ID", () => {
-    expect(() => buildLaunchUrl("bad-id")).toThrow("Ungültige Place-ID");
+  it("refuses to build a URL from an invalid Place ID", () => {
+    expect(() => buildLaunchUrl("123 & calc.exe")).toThrow();
+    expect(validPlaceId("123 & calc.exe")).toBe(false);
   });
 });

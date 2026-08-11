@@ -5,3 +5,6 @@ work/
 *.log
 *.tsbuildinfo
 .DS_Store
+
+# Stale build artifacts must not be committed.
+outputs/*.exe
