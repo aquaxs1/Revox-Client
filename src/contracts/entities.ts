@@ -18,6 +18,11 @@ export interface AppSettings {
   /** A public Roblox profile the friends screen reads. Never a login. */
   robloxUserId: string | null;
   robloxUsername: string | null;
+  minimizeToTray: boolean;
+  autostartEnabled: boolean;
+  notifyFriends: boolean;
+  discordEnabled: boolean;
+  discordApplicationId: string | null;
 }
 
 /** Every field optional: patches touch only what they carry. */
@@ -33,6 +38,11 @@ export interface SettingsInput {
   statsTrackingEnabled?: boolean;
   robloxUserId?: string | null;
   robloxUsername?: string | null;
+  minimizeToTray?: boolean;
+  autostartEnabled?: boolean;
+  notifyFriends?: boolean;
+  discordEnabled?: boolean;
+  discordApplicationId?: string | null;
 }
 
 export interface AccountProfile {
@@ -301,3 +311,18 @@ export interface CatalogItem {
   sales: number | null;
   numberRemaining: number | null;
 }
+
+/** One numeric reading of one watched target. */
+export interface WatchlistSample {
+  watchlistId: string;
+  capturedAt: string;
+  metric: string;
+  value: number;
+}
+
+export type ExportFormat = "csv" | "json";
+
+/** Raised by the friends poller when someone comes online or starts a game. */
+export type FriendEvent =
+  | { cameOnline: { userId: string; name: string } }
+  | { startedPlaying: { userId: string; name: string; game: string } };

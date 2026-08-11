@@ -29,6 +29,21 @@ The interface ships in German and English.
   when it ends.
 - **Statistics** — playtime, distinct games played and a 14-day chart, filterable
   by profile.
+- **Tray and autostart** — Revox can keep running in the notification area and
+  start with Windows, so playtime is recorded even when the window is closed.
+- **Friend notifications** — a desktop notification when a friend comes online
+  or starts a game. Never fires on the first poll, so starting Revox does not
+  produce a burst of them.
+- **Discord Rich Presence** — opt-in, with your own Discord application ID.
+  Revox stores no Discord token and fails soft when Discord is not running.
+- **Watchlist history** — watched profiles, experiences and items are sampled
+  every six hours, so the Explorer shows a trend and the change since the last
+  reading rather than only a snapshot.
+- **Server ranking** — the server list is ordered joinable-first, then by ping,
+  then by how busy it is, and the best joinable server is marked.
+- **Export** — sessions as CSV or JSON to a file you pick. Nothing is uploaded.
+- **Signed updates** — the updater accepts only packages signed with the public
+  key built into the app. See *Configuring updates* below.
 - **Appearance** — dark, light or system theme, six accent colors, three density modes.
 
 ## Hard boundaries
@@ -78,8 +93,8 @@ not available in a browser, and launching only reports the URL it *would* open.
 ## Checks
 
 ```bash
-npm run check                                   # 80 frontend tests + production build
-cargo test --manifest-path src-tauri/Cargo.toml # 45 backend tests
+npm run check                                   # 99 frontend tests + production build
+cargo test --manifest-path src-tauri/Cargo.toml # 80 backend tests
 ```
 
 ## Architecture
@@ -95,6 +110,10 @@ cargo test --manifest-path src-tauri/Cargo.toml # 45 backend tests
 | Persistence | `src-tauri/src/db/` | SQLite with versioned migrations |
 | OS access | `src-tauri/src/roblox/` | Detection, processes, hardware |
 | Sessions | `src-tauri/src/session.rs` | Pure session state machine |
+| Notifications | `src-tauri/src/notifications.rs` | Pure friend-presence diff |
+| History | `src-tauri/src/history.rs` | Which metrics to sample, and when |
+| Export | `src-tauri/src/export.rs` | CSV and JSON serializers |
+| Discord | `src-tauri/src/discord.rs` | Rich Presence, fails soft |
 | Roblox API | `src-tauri/src/api/` | Public users, games and catalog lookups |
 
 Both backend adapters implement the same `BackendPort`, so the browser preview
@@ -115,6 +134,18 @@ set.
 Roblox's keyword search for experiences is the least stable endpoint Revox
 touches. When it fails the UI says so and points at the Place-ID path, which
 does not depend on it.
+
+## Configuring updates
+
+No release endpoint is committed, so a build made from this repository reports
+**update source not configured** and stays fully usable. To enable updates:
+
+1. `npm run tauri signer generate -- -w ~/.revox/updater.key` — keep the private
+   key out of the repository and out of the installer.
+2. Add the public key and your `latest.json` endpoint under `plugins.updater` in
+   `src-tauri/tauri.conf.json`.
+3. Sign releases with the private key; the app verifies the signature before it
+   installs anything.
 
 ## Logo
 

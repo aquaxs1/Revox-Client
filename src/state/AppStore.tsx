@@ -107,6 +107,8 @@ interface AppStoreValue {
   addWatch: (input: WatchlistInput) => Promise<void>;
   linkRobloxAccount: (username: string) => Promise<void>;
   unlinkRobloxAccount: () => Promise<void>;
+  /** Saves the setting and registers it with the OS in one step. */
+  setAutostart: (enabled: boolean) => Promise<void>;
   removeWatch: (id: string) => Promise<void>;
   isWatched: (kind: WatchKind, targetId: string) => boolean;
   refreshRobloxStatus: () => Promise<void>;
@@ -342,6 +344,19 @@ export function AppStoreProvider({
     [saveSettings],
   );
 
+  /**
+   * Autostart lives in two places — the OS registration and our own setting.
+   * Registering first means a failure leaves the setting untouched rather than
+   * claiming something that did not happen.
+   */
+  const setAutostart = useCallback(
+    async (enabled: boolean) => {
+      await backend.setAutostart(enabled);
+      await saveSettings({ autostartEnabled: enabled });
+    },
+    [backend, saveSettings],
+  );
+
   const isWatched = useCallback(
     (kind: WatchKind, targetId: string) =>
       latest.current.watchlist.some(
@@ -372,6 +387,7 @@ export function AppStoreProvider({
       isWatched,
       linkRobloxAccount,
       unlinkRobloxAccount,
+      setAutostart,
       refreshRobloxStatus,
       refreshSystem,
     }),
@@ -386,6 +402,7 @@ export function AppStoreProvider({
       launchPlace,
       linkRobloxAccount,
       removeWatch,
+      setAutostart,
       unlinkRobloxAccount,
       playtimeSeconds,
       refreshGame,

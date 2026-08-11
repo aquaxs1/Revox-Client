@@ -158,6 +158,16 @@ pub struct WatchlistInput {
     pub image_url: Option<String>,
 }
 
+/// One numeric reading of one watched target.
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct WatchlistSample {
+    pub watchlist_id: String,
+    pub captured_at: String,
+    pub metric: String,
+    pub value: i64,
+}
+
 /// Everything the UI needs for a cold start, in one round trip.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -196,6 +206,14 @@ pub trait Repository: Send + Sync {
     fn add_to_watchlist(&self, input: WatchlistInput) -> Result<WatchlistEntry, AppError>;
     fn remove_from_watchlist(&self, id: &str) -> Result<(), AppError>;
     fn list_watchlist(&self) -> Result<Vec<WatchlistEntry>, AppError>;
+    fn record_samples(
+        &self,
+        watchlist_id: &str,
+        captured_at: &str,
+        metrics: &[(String, i64)],
+    ) -> Result<(), AppError>;
+    fn list_samples(&self, watchlist_id: &str) -> Result<Vec<WatchlistSample>, AppError>;
+    fn last_sample_at(&self, watchlist_id: &str) -> Result<Option<String>, AppError>;
 }
 
 pub struct SqliteRepository {
@@ -396,6 +414,29 @@ impl Repository for SqliteRepository {
         if let Some(value) = input.roblox_username {
             current.roblox_username = value;
         }
+        if let Some(value) = input.minimize_to_tray {
+            current.minimize_to_tray = value;
+        }
+        if let Some(value) = input.autostart_enabled {
+            current.autostart_enabled = value;
+        }
+        if let Some(value) = input.notify_friends {
+            current.notify_friends = value;
+        }
+        if let Some(value) = input.discord_enabled {
+            current.discord_enabled = value;
+        }
+        if let Some(value) = input.discord_application_id {
+            if let Some(id) = &value {
+                if !crate::discord::valid_application_id(id) {
+                    return Err(AppError::new(
+                        "INVALID_DISCORD_ID",
+                        "A Discord application ID is 17 to 20 digits",
+                    ));
+                }
+            }
+            current.discord_application_id = value.map(|id| id.trim().to_string());
+        }
 
         connection
             .execute(
@@ -403,6 +444,9 @@ impl Repository for SqliteRepository {
                    sidebar_expanded = ?6, onboarding_complete = ?7, robux_spent = ?8,
                    selected_account_id = ?9, stats_tracking_enabled = ?10,
                    roblox_user_id = ?11, roblox_username = ?12,
+                   minimize_to_tray = ?13, autostart_enabled = ?14,
+                   notify_friends = ?15, discord_enabled = ?16,
+                   discord_application_id = ?17,
                    updated_at = CURRENT_TIMESTAMP
                  WHERE app_profile_id = ?1",
                 params![
@@ -417,7 +461,12 @@ impl Repository for SqliteRepository {
                     current.selected_account_id,
                     current.stats_tracking_enabled,
                     current.roblox_user_id,
-                    current.roblox_username
+                    current.roblox_username,
+                    current.minimize_to_tray,
+                    current.autostart_enabled,
+                    current.notify_friends,
+                    current.discord_enabled,
+                    current.discord_application_id
                 ],
             )
             .map_err(database_error)?;
@@ -818,6 +867,72 @@ impl Repository for SqliteRepository {
         )
     }
 
+    fn record_samples(
+        &self,
+        watchlist_id: &str,
+        captured_at: &str,
+        metrics: &[(String, i64)],
+    ) -> Result<(), AppError> {
+        if metrics.is_empty() {
+            return Ok(());
+        }
+        let mut connection = self.connection.lock().map_err(lock_error)?;
+        let transaction = connection.transaction().map_err(database_error)?;
+        for (metric, value) in metrics {
+            transaction
+                .execute(
+                    "INSERT OR IGNORE INTO watchlist_samples
+                       (id, watchlist_id, captured_at, metric, value)
+                     VALUES (?1, ?2, ?3, ?4, ?5)",
+                    params![
+                        uuid::Uuid::new_v4().to_string(),
+                        watchlist_id,
+                        captured_at,
+                        metric,
+                        value
+                    ],
+                )
+                .map_err(database_error)?;
+        }
+        transaction.commit().map_err(database_error)
+    }
+
+    fn list_samples(&self, watchlist_id: &str) -> Result<Vec<WatchlistSample>, AppError> {
+        let connection = self.connection.lock().map_err(lock_error)?;
+        let mut statement = connection
+            .prepare(
+                "SELECT watchlist_id, captured_at, metric, value
+                 FROM watchlist_samples WHERE watchlist_id = ?1
+                 ORDER BY captured_at, metric
+                 LIMIT 2000",
+            )
+            .map_err(database_error)?;
+        let rows = statement
+            .query_map([watchlist_id], |row| {
+                Ok(WatchlistSample {
+                    watchlist_id: row.get(0)?,
+                    captured_at: row.get(1)?,
+                    metric: row.get(2)?,
+                    value: row.get(3)?,
+                })
+            })
+            .map_err(database_error)?
+            .collect::<rusqlite::Result<Vec<_>>>()
+            .map_err(database_error)?;
+        Ok(rows)
+    }
+
+    fn last_sample_at(&self, watchlist_id: &str) -> Result<Option<String>, AppError> {
+        let connection = self.connection.lock().map_err(lock_error)?;
+        connection
+            .query_row(
+                "SELECT MAX(captured_at) FROM watchlist_samples WHERE watchlist_id = ?1",
+                [watchlist_id],
+                |row| row.get::<_, Option<String>>(0),
+            )
+            .map_err(database_error)
+    }
+
     fn list_sessions(&self) -> Result<Vec<Session>, AppError> {
         let connection = self.connection.lock().map_err(lock_error)?;
         collect_rows(
@@ -858,7 +973,8 @@ fn read_settings(connection: &Connection) -> Result<AppSettings, AppError> {
         .query_row(
             "SELECT locale, theme, accent, spacing, sidebar_expanded, onboarding_complete,
                     robux_spent, selected_account_id, stats_tracking_enabled,
-                    roblox_user_id, roblox_username
+                    roblox_user_id, roblox_username, minimize_to_tray, autostart_enabled,
+                    notify_friends, discord_enabled, discord_application_id
              FROM settings WHERE app_profile_id = ?1",
             [APP_PROFILE],
             |row| {
@@ -874,6 +990,11 @@ fn read_settings(connection: &Connection) -> Result<AppSettings, AppError> {
                     stats_tracking_enabled: row.get(8)?,
                     roblox_user_id: row.get(9)?,
                     roblox_username: row.get(10)?,
+                    minimize_to_tray: row.get(11)?,
+                    autostart_enabled: row.get(12)?,
+                    notify_friends: row.get(13)?,
+                    discord_enabled: row.get(14)?,
+                    discord_application_id: row.get(15)?,
                 })
             },
         )

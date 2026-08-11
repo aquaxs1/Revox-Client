@@ -248,3 +248,84 @@ describe("the friends screen", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("the companion settings", () => {
+  it("start with tray on and everything else off", async () => {
+    await completeOnboarding();
+
+    const settings = (await backend.getBootstrap()).settings;
+    expect(settings.minimizeToTray).toBe(true);
+    expect(settings.autostartEnabled).toBe(false);
+    expect(settings.notifyFriends).toBe(false);
+    expect(settings.discordEnabled).toBe(false);
+  });
+
+  it("keep friend notifications locked until a Roblox profile is linked", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
+
+    const group = screen.getByRole("group", { name: "Freunde-Benachrichtigungen" });
+    expect(within(group).getByRole("button", { name: "An" })).toBeDisabled();
+    expect(screen.getByText("Verknüpfe zuerst ein Roblox-Profil.")).toBeInTheDocument();
+  });
+
+  it("keep Discord locked until an application ID is stored", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
+
+    const group = screen.getByRole("group", { name: "Rich Presence aktiv" });
+    expect(within(group).getByRole("button", { name: "An" })).toBeDisabled();
+  });
+
+  it("refuse a Discord application ID that is not a snowflake", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
+
+    const field = screen.getByLabelText("Discord Application-ID");
+    await userEvent.type(field, "12345");
+    await userEvent.tab();
+
+    expect(
+      await screen.findByText(
+        "Eine Discord Application-ID besteht aus 17 bis 20 Ziffern.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("store a valid Discord application ID and unlock the switch", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
+
+    await userEvent.type(
+      screen.getByLabelText("Discord Application-ID"),
+      "123456789012345678",
+    );
+    await userEvent.tab();
+
+    const stored = (await backend.getBootstrap()).settings;
+    expect(stored.discordApplicationId).toBe("123456789012345678");
+    const group = await screen.findByRole("group", { name: "Rich Presence aktiv" });
+    expect(within(group).getByRole("button", { name: "An" })).toBeEnabled();
+  });
+
+  it("report that the update source is unavailable in the preview", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
+
+    await userEvent.click(screen.getByRole("button", { name: "Nach Updates suchen" }));
+
+    expect(
+      await screen.findByText("Roblox ist gerade nicht erreichbar."),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("exporting statistics", () => {
+  it("disables export while there is nothing to export", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Statistiken" }));
+
+    expect(screen.getByRole("button", { name: "Als CSV" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Als JSON" })).toBeDisabled();
+  });
+});

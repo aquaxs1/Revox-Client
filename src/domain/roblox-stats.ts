@@ -115,3 +115,45 @@ export function presencePlaceId(presence: UserPresence | null): string | null {
 export function displayNameOf(user: RobloxUser): string {
   return user.displayName.trim() || user.name;
 }
+
+export interface RankedServer extends GameServer {
+  /** 0–100. `0` when Roblox reported no capacity. */
+  fillPercent: number;
+  joinable: boolean;
+}
+
+function withFill(server: GameServer): RankedServer {
+  const fillPercent =
+    server.maxPlayers > 0
+      ? Math.min(100, (server.playing / server.maxPlayers) * 100)
+      : 0;
+  return {
+    ...server,
+    fillPercent,
+    joinable: server.maxPlayers > 0 && server.playing < server.maxPlayers,
+  };
+}
+
+/**
+ * Orders servers the way someone picking one actually wants them: joinable
+ * first, then lowest ping, then busiest.
+ *
+ * A server without a reported ping sorts behind every server that has one —
+ * an unknown latency is not evidence of a good one.
+ */
+export function rankServers(servers: GameServer[]): RankedServer[] {
+  return servers.map(withFill).sort((left, right) => {
+    if (left.joinable !== right.joinable) return left.joinable ? -1 : 1;
+
+    const leftPing = left.ping ?? Number.POSITIVE_INFINITY;
+    const rightPing = right.ping ?? Number.POSITIVE_INFINITY;
+    if (leftPing !== rightPing) return leftPing - rightPing;
+
+    return right.playing - left.playing;
+  });
+}
+
+/** The server the join button should default to, or `null` if all are full. */
+export function bestServer(servers: GameServer[]): RankedServer | null {
+  return rankServers(servers).find((server) => server.joinable) ?? null;
+}

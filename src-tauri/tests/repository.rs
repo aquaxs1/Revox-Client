@@ -450,3 +450,122 @@ fn a_linked_roblox_id_must_be_numeric() {
         Some("261")
     );
 }
+
+#[test]
+fn watchlist_samples_are_recorded_and_read_back_in_order() {
+    let repository = repository();
+    let entry = repository
+        .add_to_watchlist(WatchlistInput {
+            kind: "user".to_string(),
+            target_id: "261".to_string(),
+            label: "Shedletsky".to_string(),
+            image_url: None,
+        })
+        .unwrap();
+
+    repository
+        .record_samples(
+            &entry.id,
+            "2026-08-10T12:00:00Z",
+            &[("followers".to_string(), 100), ("friends".to_string(), 20)],
+        )
+        .unwrap();
+    repository
+        .record_samples(
+            &entry.id,
+            "2026-08-11T12:00:00Z",
+            &[("followers".to_string(), 140)],
+        )
+        .unwrap();
+
+    let samples = repository.list_samples(&entry.id).unwrap();
+
+    assert_eq!(samples.len(), 3);
+    assert_eq!(samples[0].captured_at, "2026-08-10T12:00:00Z");
+    assert_eq!(
+        repository.last_sample_at(&entry.id).unwrap().as_deref(),
+        Some("2026-08-11T12:00:00Z")
+    );
+}
+
+#[test]
+fn recording_the_same_reading_twice_does_not_duplicate_it() {
+    let repository = repository();
+    let entry = repository
+        .add_to_watchlist(WatchlistInput {
+            kind: "game".to_string(),
+            target_id: "111".to_string(),
+            label: "Doors".to_string(),
+            image_url: None,
+        })
+        .unwrap();
+
+    for _ in 0..3 {
+        repository
+            .record_samples(
+                &entry.id,
+                "2026-08-11T12:00:00Z",
+                &[("playing".to_string(), 500)],
+            )
+            .unwrap();
+    }
+
+    assert_eq!(repository.list_samples(&entry.id).unwrap().len(), 1);
+}
+
+#[test]
+fn an_empty_metric_list_is_a_no_op_rather_than_an_error() {
+    let repository = repository();
+    let entry = repository
+        .add_to_watchlist(WatchlistInput {
+            kind: "asset".to_string(),
+            target_id: "1365767".to_string(),
+            label: "Dominus".to_string(),
+            image_url: None,
+        })
+        .unwrap();
+
+    repository
+        .record_samples(&entry.id, "2026-08-11T12:00:00Z", &[])
+        .unwrap();
+
+    assert!(repository.list_samples(&entry.id).unwrap().is_empty());
+    assert_eq!(repository.last_sample_at(&entry.id).unwrap(), None);
+}
+
+#[test]
+fn a_discord_application_id_must_be_a_snowflake() {
+    let repository = repository();
+
+    assert!(repository
+        .save_settings(SettingsInput {
+            discord_application_id: Some(Some("nope".to_string())),
+            ..Default::default()
+        })
+        .is_err());
+
+    let settings = repository
+        .save_settings(SettingsInput {
+            discord_application_id: Some(Some("  123456789012345678  ".to_string())),
+            discord_enabled: Some(true),
+            ..Default::default()
+        })
+        .unwrap();
+
+    assert_eq!(
+        settings.discord_application_id.as_deref(),
+        Some("123456789012345678")
+    );
+    assert!(settings.discord_enabled);
+}
+
+#[test]
+fn companion_settings_start_switched_off_except_minimize_to_tray() {
+    let settings = repository().settings().unwrap();
+
+    assert!(settings.minimize_to_tray);
+    assert!(!settings.autostart_enabled);
+    assert!(!settings.notify_friends);
+    assert!(!settings.discord_enabled);
+    assert_eq!(settings.discord_application_id, None);
+}

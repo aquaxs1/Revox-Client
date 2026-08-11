@@ -17,6 +17,11 @@ pub struct AppSettings {
     /// A public Roblox profile the friends screen reads. Never a login.
     pub roblox_user_id: Option<String>,
     pub roblox_username: Option<String>,
+    pub minimize_to_tray: bool,
+    pub autostart_enabled: bool,
+    pub notify_friends: bool,
+    pub discord_enabled: bool,
+    pub discord_application_id: Option<String>,
 }
 
 /// Partial settings update. Every field is optional so the UI can patch a
@@ -35,6 +40,11 @@ pub struct SettingsInput {
     pub stats_tracking_enabled: Option<bool>,
     pub roblox_user_id: Option<Option<String>>,
     pub roblox_username: Option<Option<String>>,
+    pub minimize_to_tray: Option<bool>,
+    pub autostart_enabled: Option<bool>,
+    pub notify_friends: Option<bool>,
+    pub discord_enabled: Option<bool>,
+    pub discord_application_id: Option<Option<String>>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]

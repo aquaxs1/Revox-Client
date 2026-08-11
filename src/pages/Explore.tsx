@@ -20,9 +20,11 @@ import type {
 } from "../contracts/entities";
 import { parsePlaceId } from "../domain/roblox";
 import {
+  bestServer,
   displayNameOf,
   followersPerFriend,
   likeRatio,
+  rankServers,
   resaleMarkup,
   serverSpread,
   visitsPerActivePlayer,
@@ -32,6 +34,7 @@ import { useI18n } from "../i18n";
 import { toBackendError } from "../services/backend";
 import { useAppStore } from "../state/AppStore";
 import { StatGrid, type Stat } from "../components/StatGrid";
+import { WatchHistory } from "../components/WatchHistory";
 
 type Tab = "users" | "games" | "items";
 
@@ -543,6 +546,8 @@ function UserDetail({
           {user.description.trim() || t("user.noDescription")}
         </p>
       </section>
+
+      <WatchHistory kind="user" targetId={user.id} />
     </div>
   );
 }
@@ -570,6 +575,8 @@ function GameDetail({
   const ratio = likeRatio(stats);
   const perPlayer = visitsPerActivePlayer(stats);
   const spread = servers ? serverSpread(servers) : null;
+  const ranked = servers ? rankServers(servers) : [];
+  const best = servers ? bestServer(servers) : null;
   const placeId = stats.rootPlaceId;
 
   const facts: Stat[] = [
@@ -652,21 +659,23 @@ function GameDetail({
           </div>
         ) : (
           <div className="rv-server-list">
-            {servers.slice(0, 25).map((server) => (
-              <div className="rv-server" key={server.id}>
+            {ranked.slice(0, 25).map((server) => (
+              <div
+                className="rv-server"
+                key={server.id}
+                data-best={server.id === best?.id}
+              >
                 <span className="rv-meter" aria-hidden>
-                  <i
-                    style={{
-                      width: `${
-                        server.maxPlayers > 0
-                          ? Math.min(100, (server.playing / server.maxPlayers) * 100)
-                          : 0
-                      }%`,
-                    }}
-                  />
+                  <i style={{ width: `${server.fillPercent}%` }} />
                 </span>
                 <span className="rv-server-count">
                   {server.playing}/{server.maxPlayers}
+                  {server.id === best?.id && (
+                    <b className="rv-server-best">{t("explore.bestServer")}</b>
+                  )}
+                  {!server.joinable && (
+                    <b className="rv-server-full">{t("explore.serverFull")}</b>
+                  )}
                 </span>
                 <span className="rv-server-ping">
                   {server.ping === null ? "—" : `${server.ping} ms`}
@@ -674,7 +683,7 @@ function GameDetail({
                 <button
                   className="rv-button is-play"
                   onClick={() => placeId && onJoin(placeId, server.id)}
-                  disabled={!placeId}
+                  disabled={!placeId || !server.joinable}
                 >
                   <Play size={14} fill="currentColor" />
                   {t("game.joinServer")}
@@ -684,6 +693,8 @@ function GameDetail({
           </div>
         )}
       </section>
+
+      <WatchHistory kind="game" targetId={stats.universeId} />
     </div>
   );
 }
@@ -778,6 +789,8 @@ function ItemDetail({
           </p>
         </section>
       )}
+
+      <WatchHistory kind="asset" targetId={item.id} />
     </div>
   );
 }

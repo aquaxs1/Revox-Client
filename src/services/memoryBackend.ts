@@ -12,8 +12,10 @@ import type {
   LaunchRequest,
   Session,
   SettingsInput,
+  ExportFormat,
   WatchlistEntry,
   WatchlistInput,
+  WatchlistSample,
 } from "../contracts/entities";
 import { buildLaunchUrl, validPlaceId } from "../domain/roblox";
 import { BackendError } from "./backend";
@@ -28,6 +30,7 @@ interface PreviewData {
   sessions: Session[];
   activities: Activity[];
   watchlist: WatchlistEntry[];
+  watchlistSamples: WatchlistSample[];
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -42,6 +45,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   statsTrackingEnabled: false,
   robloxUserId: null,
   robloxUsername: null,
+  minimizeToTray: true,
+  autostartEnabled: false,
+  notifyFriends: false,
+  discordEnabled: false,
+  discordApplicationId: null,
 };
 
 function emptyData(): PreviewData {
@@ -53,6 +61,7 @@ function emptyData(): PreviewData {
     sessions: [],
     activities: [],
     watchlist: [],
+    watchlistSamples: [],
   };
 }
 
@@ -172,6 +181,16 @@ export function createMemoryBackend(
       }
       if (input.robuxSpent !== undefined && input.robuxSpent < 0) {
         throw new BackendError("INVALID_ROBUX", "Recorded Robux must not be negative");
+      }
+      if (
+        input.discordApplicationId !== undefined &&
+        input.discordApplicationId !== null &&
+        !/^\d{17,20}$/.test(input.discordApplicationId.trim())
+      ) {
+        throw new BackendError(
+          "INVALID_DISCORD_ID",
+          "A Discord application ID is 17 to 20 digits",
+        );
       }
       if (
         input.robloxUserId !== undefined &&
@@ -377,6 +396,30 @@ export function createMemoryBackend(
 
     async listWatchlist() {
       return [...data.watchlist];
+    },
+
+    async listWatchlistSamples(watchlistId: string) {
+      return data.watchlistSamples
+        .filter((sample) => sample.watchlistId === watchlistId)
+        .sort((left, right) => left.capturedAt.localeCompare(right.capturedAt));
+    },
+
+    // Writing files, registering autostart, reaching Discord and checking for
+    // updates are all desktop-only. The preview says so rather than pretending.
+    async exportSessions(_format: ExportFormat, _path: string): Promise<string> {
+      return offline();
+    },
+    async setAutostart() {
+      return offline();
+    },
+    async checkForUpdate(): Promise<string | null> {
+      return offline();
+    },
+    async discordConnect() {
+      return offline();
+    },
+    async discordClear() {
+      return offline();
     },
 
     // Roblox blocks browser-origin requests, so the preview cannot reach any of

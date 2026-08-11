@@ -109,7 +109,7 @@ fn migration_is_idempotent() {
             .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| row
                 .get::<_, i64>(0))
             .unwrap(),
-        3
+        4
     );
 }
 
@@ -133,6 +133,73 @@ fn third_migration_adds_opt_in_tracking_and_the_watchlist() {
                 [],
                 |row| row.get::<_, i64>(0)
             )
+            .unwrap(),
+        0
+    );
+}
+
+#[test]
+fn fourth_migration_adds_companion_settings_and_sample_history() {
+    let (_directory, mut connection) = temporary_database();
+
+    apply_migrations(&mut connection).unwrap();
+
+    let settings = table_columns(&connection, "settings");
+    for column in [
+        "minimize_to_tray",
+        "autostart_enabled",
+        "notify_friends",
+        "discord_enabled",
+        "discord_application_id",
+    ] {
+        assert!(settings.contains(column), "settings is missing {column}");
+    }
+
+    // Notifications, Discord and autostart all start switched off.
+    for column in ["notify_friends", "discord_enabled", "autostart_enabled"] {
+        assert_eq!(
+            connection
+                .query_row(
+                    &format!("SELECT {column} FROM settings WHERE app_profile_id = 'default'"),
+                    [],
+                    |row| row.get::<_, i64>(0)
+                )
+                .unwrap(),
+            0,
+            "{column} should default to off"
+        );
+    }
+
+    assert!(table_columns(&connection, "watchlist_samples").contains("metric"));
+}
+
+#[test]
+fn deleting_a_watchlist_entry_takes_its_samples_with_it() {
+    let (_directory, mut connection) = temporary_database();
+    apply_migrations(&mut connection).unwrap();
+    connection
+        .execute(
+            "INSERT INTO watchlist (id, app_profile_id, kind, target_id, label)
+             VALUES ('w1', 'default', 'user', '261', 'Shedletsky')",
+            [],
+        )
+        .unwrap();
+    connection
+        .execute(
+            "INSERT INTO watchlist_samples (id, watchlist_id, captured_at, metric, value)
+             VALUES ('s1', 'w1', '2026-08-11T12:00:00Z', 'followers', 100)",
+            [],
+        )
+        .unwrap();
+
+    connection
+        .execute("DELETE FROM watchlist WHERE id = 'w1'", [])
+        .unwrap();
+
+    assert_eq!(
+        connection
+            .query_row("SELECT COUNT(*) FROM watchlist_samples", [], |row| row
+                .get::<_, i64>(0))
             .unwrap(),
         0
     );

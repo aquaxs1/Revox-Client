@@ -25,7 +25,9 @@ import type {
   UserStats,
   WatchlistEntry,
   WatchlistInput,
+  WatchlistSample,
 } from "./entities";
+import type { ExportFormat } from "./entities";
 
 /**
  * The complete surface the UI is allowed to use.
@@ -54,6 +56,15 @@ export interface BackendPort {
   addToWatchlist(input: WatchlistInput): Promise<WatchlistEntry>;
   removeFromWatchlist(id: string): Promise<void>;
   listWatchlist(): Promise<WatchlistEntry[]>;
+  listWatchlistSamples(watchlistId: string): Promise<WatchlistSample[]>;
+
+  // Platform
+  exportSessions(format: ExportFormat, path: string): Promise<string>;
+  setAutostart(enabled: boolean): Promise<void>;
+  /** Resolves to the new version, or `null` when already up to date. */
+  checkForUpdate(): Promise<string | null>;
+  discordConnect(): Promise<void>;
+  discordClear(): Promise<void>;
 
   // Public Roblox data
   fetchGameMetadata(placeId: string): Promise<GameMetadata>;

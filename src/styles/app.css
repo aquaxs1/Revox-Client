@@ -1528,3 +1528,72 @@
 .rv-status[data-state="unknown"] i {
   background: var(--rv-text-faint);
 }
+
+/* ------------------------------------------------------ trends & servers -- */
+
+.rv-trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--rv-gap-sm);
+}
+
+.rv-trend {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  background: var(--rv-bg);
+  border: 1px solid var(--rv-border);
+  border-radius: var(--rv-radius);
+}
+
+.rv-trend strong {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.rv-trend small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rv-trend-up {
+  color: var(--rv-green);
+}
+
+.rv-trend-down {
+  color: var(--rv-red);
+}
+
+.rv-trend-chart {
+  margin-top: 6px;
+  opacity: 0.85;
+}
+
+.rv-server[data-best="true"] {
+  border-color: var(--rv-green);
+}
+
+.rv-server-best,
+.rv-server-full {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rv-server-best {
+  background: color-mix(in srgb, var(--rv-green) 24%, transparent);
+  color: var(--rv-green);
+}
+
+.rv-server-full {
+  background: color-mix(in srgb, var(--rv-text-faint) 24%, transparent);
+  color: var(--rv-text-faint);
+}

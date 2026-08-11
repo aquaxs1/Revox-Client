@@ -20,6 +20,7 @@ import type {
   UserPresence,
   UserStats,
   WatchlistEntry,
+  WatchlistSample,
 } from "../contracts/entities";
 
 export type InvokeFunction = (
@@ -97,6 +98,15 @@ export function createTauriBackend(invoke: InvokeFunction): BackendPort {
       call<WatchlistEntry>(invoke, "add_to_watchlist", { input }),
     removeFromWatchlist: (id) => call<void>(invoke, "remove_from_watchlist", { id }),
     listWatchlist: () => call<WatchlistEntry[]>(invoke, "list_watchlist"),
+    listWatchlistSamples: (watchlistId) =>
+      call<WatchlistSample[]>(invoke, "list_watchlist_samples", { watchlistId }),
+
+    exportSessions: (format, path) =>
+      call<string>(invoke, "export_sessions", { format, path }),
+    setAutostart: (enabled) => call<void>(invoke, "set_autostart", { enabled }),
+    checkForUpdate: () => call<string | null>(invoke, "check_for_update"),
+    discordConnect: () => call<void>(invoke, "discord_connect"),
+    discordClear: () => call<void>(invoke, "discord_clear"),
 
     fetchGameMetadata: (placeId) =>
       call<GameMetadata>(invoke, "fetch_game_metadata", { placeId }),

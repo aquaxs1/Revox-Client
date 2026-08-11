@@ -1,4 +1,6 @@
+import { Download } from "lucide-react";
 import { useMemo, useState } from "react";
+import type { ExportFormat } from "../contracts/entities";
 import {
   dailyPlaytime,
   distinctGamesPlayed,
@@ -9,6 +11,7 @@ import {
   totalPlaytimeSeconds,
 } from "../domain/stats";
 import { useI18n } from "../i18n";
+import { isTauri, toBackendError } from "../services/backend";
 import { useAppStore } from "../state/AppStore";
 import { Sparkline } from "../components/Sparkline";
 
@@ -17,9 +20,38 @@ const ALL_TAB_COLOR = "#F2557A";
 const PROFILE_TAB_COLOR = "#F58A24";
 
 export function StatsPage() {
-  const { t, locale } = useI18n();
-  const { state } = useAppStore();
+  const { t, locale, translateError } = useI18n();
+  const { state, backend } = useAppStore();
   const [scope, setScope] = useState<"all" | "account">("all");
+  const [notice, setNotice] = useState<{ text: string; tone: "ok" | "error" } | null>(
+    null,
+  );
+
+  /**
+   * Asks for a destination, then hands the path to Rust to write.
+   *
+   * The user picks the file themselves; Revox never writes anywhere it was not
+   * pointed at, and nothing leaves the machine.
+   */
+  async function exportAs(format: ExportFormat) {
+    setNotice(null);
+    try {
+      let path: string | null = null;
+      if (isTauri()) {
+        const { save } = await import("@tauri-apps/plugin-dialog");
+        path = await save({
+          defaultPath: `revox-sessions.${format}`,
+          filters: [{ name: format.toUpperCase(), extensions: [format] }],
+        });
+        if (!path) return;
+      }
+      const written = await backend.exportSessions(format, path ?? `revox-sessions.${format}`);
+      setNotice({ tone: "ok", text: t("settings.exportDone", { path: written }) });
+    } catch (reason) {
+      const failure = toBackendError(reason);
+      setNotice({ tone: "error", text: translateError(failure.code, failure.message) });
+    }
+  }
 
   const activeAccount = state.accounts.find(
     (account) => account.id === state.settings.selectedAccountId,
@@ -38,26 +70,53 @@ export function StatsPage() {
 
   return (
     <div className="rv-page">
-      <div className="rv-tabs">
-        <button
-          className="rv-tab"
-          style={{ ["--tab-color" as string]: ALL_TAB_COLOR }}
-          aria-pressed={scope === "all"}
-          onClick={() => setScope("all")}
-        >
-          {t("stats.all")}
-        </button>
-        {activeAccount && (
+      <div className="rv-section-head">
+        <div className="rv-tabs">
           <button
             className="rv-tab"
-            style={{ ["--tab-color" as string]: PROFILE_TAB_COLOR }}
-            aria-pressed={scope === "account"}
-            onClick={() => setScope("account")}
+            style={{ ["--tab-color" as string]: ALL_TAB_COLOR }}
+            aria-pressed={scope === "all"}
+            onClick={() => setScope("all")}
           >
-            {activeAccount.username}
+            {t("stats.all")}
           </button>
-        )}
+          {activeAccount && (
+            <button
+              className="rv-tab"
+              style={{ ["--tab-color" as string]: PROFILE_TAB_COLOR }}
+              aria-pressed={scope === "account"}
+              onClick={() => setScope("account")}
+            >
+              {activeAccount.username}
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            className="rv-button"
+            onClick={() => void exportAs("csv")}
+            disabled={sessions.length === 0}
+          >
+            <Download size={15} />
+            {t("settings.exportCsv")}
+          </button>
+          <button
+            className="rv-button"
+            onClick={() => void exportAs("json")}
+            disabled={sessions.length === 0}
+          >
+            <Download size={15} />
+            {t("settings.exportJson")}
+          </button>
+        </div>
       </div>
+
+      {notice && (
+        <p className={notice.tone === "error" ? "rv-error-text" : "rv-note"}>
+          {notice.text}
+        </p>
+      )}
 
       <section className="rv-stat-tiles">
         <article className="rv-stat-tile">

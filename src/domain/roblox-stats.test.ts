@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { GameServer, UserPresence } from "../contracts/entities";
 import {
+  bestServer,
   followersPerFriend,
   isJoinable,
   likeRatio,
   presencePlaceId,
+  rankServers,
   resaleMarkup,
   serverSpread,
   visitsPerActivePlayer,
@@ -116,5 +118,65 @@ describe("presencePlaceId", () => {
     expect(presencePlaceId(presence({ rootPlaceId: "1", placeId: "2" }))).toBe("1");
     expect(presencePlaceId(presence({ rootPlaceId: null, placeId: "2" }))).toBe("2");
     expect(presencePlaceId(null)).toBeNull();
+  });
+});
+
+describe("rankServers", () => {
+  it("puts joinable servers first, then the lowest ping", () => {
+    const ranked = rankServers([
+      { id: "full", playing: 12, maxPlayers: 12, fps: null, ping: 10 },
+      { id: "slow", playing: 4, maxPlayers: 12, fps: null, ping: 120 },
+      { id: "fast", playing: 6, maxPlayers: 12, fps: null, ping: 30 },
+    ]);
+
+    expect(ranked.map((server) => server.id)).toEqual(["fast", "slow", "full"]);
+  });
+
+  it("sorts a server with no reported ping behind every server that has one", () => {
+    const ranked = rankServers([
+      { id: "unknown", playing: 5, maxPlayers: 12, fps: null, ping: null },
+      { id: "known", playing: 5, maxPlayers: 12, fps: null, ping: 200 },
+    ]);
+
+    expect(ranked[0].id).toBe("known");
+  });
+
+  it("breaks a ping tie in favour of the busier server", () => {
+    const ranked = rankServers([
+      { id: "empty", playing: 1, maxPlayers: 12, fps: null, ping: 40 },
+      { id: "busy", playing: 9, maxPlayers: 12, fps: null, ping: 40 },
+    ]);
+
+    expect(ranked[0].id).toBe("busy");
+  });
+
+  it("computes the fill percentage and guards a zero capacity", () => {
+    const ranked = rankServers([
+      { id: "half", playing: 6, maxPlayers: 12, fps: null, ping: 10 },
+      { id: "broken", playing: 3, maxPlayers: 0, fps: null, ping: 10 },
+    ]);
+
+    expect(ranked.find((server) => server.id === "half")?.fillPercent).toBe(50);
+    const broken = ranked.find((server) => server.id === "broken");
+    expect(broken?.fillPercent).toBe(0);
+    expect(broken?.joinable).toBe(false);
+  });
+});
+
+describe("bestServer", () => {
+  it("picks the fastest joinable server", () => {
+    const best = bestServer([
+      { id: "full", playing: 12, maxPlayers: 12, fps: null, ping: 5 },
+      { id: "ok", playing: 6, maxPlayers: 12, fps: null, ping: 45 },
+    ]);
+
+    expect(best?.id).toBe("ok");
+  });
+
+  it("is null when every server is full", () => {
+    expect(
+      bestServer([{ id: "full", playing: 12, maxPlayers: 12, fps: null, ping: 5 }]),
+    ).toBeNull();
+    expect(bestServer([])).toBeNull();
   });
 });

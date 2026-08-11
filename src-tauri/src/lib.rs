@@ -1,7 +1,11 @@
 pub mod api;
 pub mod contracts;
 pub mod db;
+pub mod discord;
 pub mod error;
+pub mod export;
+pub mod history;
+pub mod notifications;
 pub mod roblox;
 pub mod session;
 
@@ -17,22 +21,34 @@ use contracts::{
 use db::repository::{
     AccountGame, AccountInput, AccountProfile, Activity, ActivityInput, AppBootstrap,
     FinishedSession, Game, GameInput, Repository, Session, SqliteRepository, WatchlistEntry,
-    WatchlistInput,
+    WatchlistInput, WatchlistSample,
 };
+use discord::DiscordPresence;
 use error::AppError;
+use notifications::{FriendEvent, PresenceWatcher};
 use roblox::{detect_roblox, launch_official, system::HostSystem, RobloxSystem};
 use session::{PendingLaunch, SessionEvent, SessionMachine};
 use tauri::{Emitter, Manager};
+use tauri_plugin_notification::NotificationExt;
 
 /// How often the background monitor asks the OS whether Roblox is running.
 const MONITOR_INTERVAL: Duration = Duration::from_secs(3);
-/// Event name the UI listens on to refresh itself after a session is written.
+/// How often friend presence is polled while notifications are on.
+const FRIEND_POLL_INTERVAL: Duration = Duration::from_secs(60);
+/// How often the watchlist sampler wakes up; individual targets are still only
+/// sampled once per `history::DEFAULT_SAMPLE_INTERVAL_HOURS`.
+const SAMPLER_INTERVAL: Duration = Duration::from_secs(15 * 60);
+
 const SESSION_EVENT: &str = "revox://session-changed";
+const FRIEND_EVENT: &str = "revox://friend-event";
+const WATCHLIST_EVENT: &str = "revox://watchlist-sampled";
 
 struct AppState {
     repository: Arc<SqliteRepository>,
     system: Arc<HostSystem>,
     machine: Arc<Mutex<SessionMachine>>,
+    presence: Arc<Mutex<PresenceWatcher>>,
+    discord: Arc<DiscordPresence>,
     started: Instant,
 }
 
@@ -43,11 +59,8 @@ impl AppState {
         self.started.elapsed().as_millis() as u64
     }
 
-    fn tracking_enabled(&self) -> bool {
-        self.repository
-            .settings()
-            .map(|settings| settings.stats_tracking_enabled)
-            .unwrap_or(false)
+    fn settings(&self) -> Option<AppSettings> {
+        self.repository.settings().ok()
     }
 }
 
@@ -71,7 +84,21 @@ fn save_settings(
     state: tauri::State<'_, AppState>,
     input: SettingsInput,
 ) -> Result<AppSettings, AppError> {
-    state.repository.save_settings(input)
+    let notifications_changed = input.notify_friends.is_some();
+    let account_changed = input.roblox_user_id.is_some();
+    let settings = state.repository.save_settings(input)?;
+
+    // Relinking or toggling notifications must not compare the new profile's
+    // friends against the previous one's readings.
+    if notifications_changed || account_changed {
+        if let Ok(mut watcher) = state.presence.lock() {
+            watcher.reset();
+        }
+    }
+    if !settings.discord_enabled {
+        state.discord.disconnect();
+    }
+    Ok(settings)
 }
 
 #[tauri::command]
@@ -154,6 +181,52 @@ fn list_watchlist(state: tauri::State<'_, AppState>) -> Result<Vec<WatchlistEntr
     state.repository.list_watchlist()
 }
 
+#[tauri::command]
+fn list_watchlist_samples(
+    state: tauri::State<'_, AppState>,
+    watchlist_id: String,
+) -> Result<Vec<WatchlistSample>, AppError> {
+    state.repository.list_samples(&watchlist_id)
+}
+
+// ------------------------------------------------------------------ export --
+
+/// Writes the recorded sessions to a path the user picked in a save dialog.
+///
+/// The extension must match the format, so a mis-typed name cannot produce a
+/// `.csv` file holding JSON.
+#[tauri::command]
+fn export_sessions(
+    state: tauri::State<'_, AppState>,
+    format: String,
+    path: String,
+) -> Result<String, AppError> {
+    let bootstrap = state.repository.bootstrap()?;
+    let rows = export::build_rows(&bootstrap.sessions, &bootstrap.games, &bootstrap.accounts);
+
+    let lowered = path.to_lowercase();
+    let contents = match format.as_str() {
+        "csv" if lowered.ends_with(".csv") => export::sessions_to_csv(&rows),
+        "json" if lowered.ends_with(".json") => export::sessions_to_json(&rows)?,
+        "csv" | "json" => {
+            return Err(AppError::new(
+                "EXPORT_EXTENSION_MISMATCH",
+                "The file name does not match the chosen format",
+            ))
+        }
+        _ => {
+            return Err(AppError::new(
+                "EXPORT_UNKNOWN_FORMAT",
+                "Export format must be csv or json",
+            ))
+        }
+    };
+
+    std::fs::write(&path, contents)
+        .map_err(|error| AppError::new("EXPORT_FAILED", error.to_string()))?;
+    Ok(path)
+}
+
 // ------------------------------------------------------------- roblox data --
 
 #[tauri::command]
@@ -161,7 +234,6 @@ async fn fetch_game_metadata(place_id: String) -> Result<GameMetadata, AppError>
     api::games::metadata(&place_id).await
 }
 
-/// Looks the place up on Roblox and writes the result onto the stored game.
 #[tauri::command]
 async fn sync_game_metadata(
     state: tauri::State<'_, AppState>,
@@ -227,10 +299,66 @@ async fn get_catalog_item(asset_id: String) -> Result<CatalogItem, AppError> {
     api::catalog::item(&asset_id).await
 }
 
+// ---------------------------------------------------------------- platform --
+
+#[tauri::command]
+fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), AppError> {
+    use tauri_plugin_autostart::ManagerExt;
+
+    let manager = app.autolaunch();
+    let result = if enabled {
+        manager.enable()
+    } else {
+        manager.disable()
+    };
+    result.map_err(|error| AppError::new("AUTOSTART_FAILED", error.to_string()))
+}
+
+/// Checks the configured update endpoint.
+///
+/// Returns the new version when one exists, `None` when up to date, and a typed
+/// error when no release endpoint has been configured for this build.
+#[tauri::command]
+async fn check_for_update(app: tauri::AppHandle) -> Result<Option<String>, AppError> {
+    use tauri_plugin_updater::UpdaterExt;
+
+    let updater = app.updater().map_err(|_| {
+        AppError::new(
+            "UPDATE_SOURCE_NOT_CONFIGURED",
+            "This build has no release endpoint configured",
+        )
+    })?;
+    let update = updater
+        .check()
+        .await
+        .map_err(|error| AppError::new("UPDATE_CHECK_FAILED", error.to_string()))?;
+    Ok(update.map(|update| update.version))
+}
+
+#[tauri::command]
+fn discord_connect(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
+    let settings = state
+        .settings()
+        .ok_or_else(|| AppError::new("SETTINGS_UNAVAILABLE", "Could not read settings"))?;
+    if !settings.discord_enabled {
+        return Err(AppError::new(
+            "DISCORD_DISABLED",
+            "Discord Rich Presence is switched off",
+        ));
+    }
+    let application_id = settings.discord_application_id.ok_or_else(|| {
+        AppError::new("DISCORD_NOT_CONFIGURED", "No Discord application ID set")
+    })?;
+    state.discord.connect(&application_id)
+}
+
+#[tauri::command]
+fn discord_clear(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
+    state.discord.clear()
+}
+
 // ----------------------------------------------------------------- launch --
 
-/// Hands a validated place over to the official Roblox client and, when
-/// tracking is enabled, arms the session monitor.
 #[tauri::command]
 fn launch_roblox(
     state: tauri::State<'_, AppState>,
@@ -243,8 +371,6 @@ fn launch_roblox(
     ) {
         Ok(uri) => uri,
         Err(error) => {
-            // A failed launch is still worth recording, so the user can see
-            // what happened on the profile screen.
             let _ = state.repository.record_activity(ActivityInput {
                 account_profile_id: input.account_profile_id.clone(),
                 game_id: input.game_id.clone(),
@@ -266,9 +392,14 @@ fn launch_roblox(
         error_code: None,
     })?;
 
+    let settings = state.settings();
+
     // With tracking off the monitor is never armed, so no session is written
     // and no process is watched.
-    if state.tracking_enabled() {
+    if settings
+        .as_ref()
+        .is_some_and(|settings| settings.stats_tracking_enabled)
+    {
         lock_machine(&state.machine)?.arm(
             PendingLaunch {
                 place_id: Some(input.place_id.clone()),
@@ -280,6 +411,15 @@ fn launch_roblox(
         );
     }
 
+    // Discord is best effort: a missing or closed Discord must never block a
+    // launch.
+    if settings
+        .as_ref()
+        .is_some_and(|settings| settings.discord_enabled)
+    {
+        publish_discord(&state, input.game_id.as_deref());
+    }
+
     Ok(LaunchReceipt {
         uri,
         activity_id: activity.id,
@@ -287,8 +427,48 @@ fn launch_roblox(
     })
 }
 
-/// Drives the session state machine on a fixed cadence and persists whatever
-/// it decides. Runs for the lifetime of the app on its own thread.
+fn publish_discord(state: &AppState, game_id: Option<&str>) {
+    let Some(settings) = state.settings() else {
+        return;
+    };
+    let Some(application_id) = settings.discord_application_id.as_deref() else {
+        return;
+    };
+    if state.discord.connect(application_id).is_err() {
+        return;
+    }
+
+    let name = game_id
+        .and_then(|id| {
+            state
+                .repository
+                .bootstrap()
+                .ok()?
+                .games
+                .into_iter()
+                .find(|game| game.id == id)
+        })
+        .map(|game| game.name)
+        .unwrap_or_else(|| "Roblox".to_string());
+    let profile = settings.selected_account_id.and_then(|id| {
+        state
+            .repository
+            .bootstrap()
+            .ok()?
+            .accounts
+            .into_iter()
+            .find(|account| account.id == id)
+            .map(|account| account.username)
+    });
+
+    let _ = state
+        .discord
+        .set_playing(&name, profile.as_deref(), Utc::now().timestamp());
+}
+
+// -------------------------------------------------------------- background --
+
+/// Drives the session state machine and persists whatever it decides.
 fn spawn_session_monitor(app: tauri::AppHandle) {
     std::thread::spawn(move || loop {
         std::thread::sleep(MONITOR_INTERVAL);
@@ -299,7 +479,10 @@ fn spawn_session_monitor(app: tauri::AppHandle) {
 
         // Tracking is opt-in. While it is off the monitor does not look at
         // processes at all.
-        if !state.tracking_enabled() {
+        if !state
+            .settings()
+            .is_some_and(|settings| settings.stats_tracking_enabled)
+        {
             if let Ok(mut machine) = state.machine.lock() {
                 machine.reset();
             }
@@ -351,11 +534,157 @@ fn spawn_session_monitor(app: tauri::AppHandle) {
                     source: "revox".to_string(),
                     game_instance_id: launch.game_instance_id,
                 });
+                // The session is over, so the presence goes with it.
+                let _ = state.discord.clear();
             }
         }
 
         let _ = app.emit(SESSION_EVENT, ());
     });
+}
+
+/// Polls the linked profile's friends and raises a notification when one comes
+/// online or starts a game.
+fn spawn_friend_poller(app: tauri::AppHandle) {
+    std::thread::spawn(move || loop {
+        std::thread::sleep(FRIEND_POLL_INTERVAL);
+
+        let Some(state) = app.try_state::<AppState>() else {
+            continue;
+        };
+        let Some(settings) = state.settings() else {
+            continue;
+        };
+        if !settings.notify_friends {
+            continue;
+        }
+        let Some(user_id) = settings.roblox_user_id else {
+            continue;
+        };
+
+        let Ok(friends) = tauri::async_runtime::block_on(api::users::friends(&user_id)) else {
+            continue;
+        };
+        let events = {
+            let Ok(mut watcher) = state.presence.lock() else {
+                continue;
+            };
+            watcher.diff(&friends)
+        };
+
+        for event in &events {
+            let (title, body) = match event {
+                FriendEvent::CameOnline { name, .. } => ("Revox".to_string(), format!("{name} is online")),
+                FriendEvent::StartedPlaying { name, game, .. } => (
+                    "Revox".to_string(),
+                    if game.is_empty() {
+                        format!("{name} started playing")
+                    } else {
+                        format!("{name} is playing {game}")
+                    },
+                ),
+            };
+            let _ = app.notification().builder().title(title).body(body).show();
+        }
+
+        if !events.is_empty() {
+            let _ = app.emit(FRIEND_EVENT, events);
+        }
+    });
+}
+
+/// Records a numeric reading for each watched target that is due for one.
+fn spawn_watchlist_sampler(app: tauri::AppHandle) {
+    std::thread::spawn(move || loop {
+        std::thread::sleep(SAMPLER_INTERVAL);
+
+        let Some(state) = app.try_state::<AppState>() else {
+            continue;
+        };
+        let Ok(entries) = state.repository.list_watchlist() else {
+            continue;
+        };
+
+        let mut sampled = false;
+        for entry in entries {
+            let last = state.repository.last_sample_at(&entry.id).ok().flatten();
+            if !history::due_for_sample(
+                last.as_deref(),
+                Utc::now(),
+                history::DEFAULT_SAMPLE_INTERVAL_HOURS,
+            ) {
+                continue;
+            }
+
+            let metrics = match entry.kind.as_str() {
+                "user" => tauri::async_runtime::block_on(api::users::stats(&entry.target_id))
+                    .ok()
+                    .map(|stats| history::metrics_for_user(&stats)),
+                "game" => tauri::async_runtime::block_on(api::games::stats(&entry.target_id))
+                    .ok()
+                    .map(|stats| history::metrics_for_game(&stats)),
+                "asset" => tauri::async_runtime::block_on(api::catalog::item(&entry.target_id))
+                    .ok()
+                    .map(|item| history::metrics_for_item(&item)),
+                _ => None,
+            };
+
+            if let Some(metrics) = metrics {
+                if state
+                    .repository
+                    .record_samples(&entry.id, &Utc::now().to_rfc3339(), &metrics)
+                    .is_ok()
+                {
+                    sampled = true;
+                }
+            }
+        }
+
+        if sampled {
+            let _ = app.emit(WATCHLIST_EVENT, ());
+        }
+    });
+}
+
+/// Builds the tray icon and its menu.
+fn build_tray(app: &tauri::App) -> tauri::Result<()> {
+    use tauri::menu::{Menu, MenuItem};
+    use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+
+    let show = MenuItem::with_id(app, "show", "Revox", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Beenden / Quit", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&show, &quit])?;
+
+    TrayIconBuilder::with_id("revox-tray")
+        .icon(app.default_window_icon().unwrap().clone())
+        .tooltip("Revox Client")
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "show" => reveal_main_window(app),
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                reveal_main_window(tray.app_handle());
+            }
+        })
+        .build(app)?;
+    Ok(())
+}
+
+fn reveal_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -364,7 +693,13 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_sql::Builder::default().build())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .setup(|app| {
             let app_data = app.path().app_data_dir()?;
             std::fs::create_dir_all(&app_data)?;
@@ -376,10 +711,31 @@ pub fn run() {
                 repository: Arc::new(repository),
                 system: Arc::new(HostSystem::new()),
                 machine: Arc::new(Mutex::new(SessionMachine::new())),
+                presence: Arc::new(Mutex::new(PresenceWatcher::new())),
+                discord: Arc::new(DiscordPresence::new()),
                 started: Instant::now(),
             });
+
+            build_tray(app)?;
             spawn_session_monitor(app.handle().clone());
+            spawn_friend_poller(app.handle().clone());
+            spawn_watchlist_sampler(app.handle().clone());
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // Closing hides to the tray unless the user turned that off, so a
+            // stray click on X does not stop playtime recording.
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let hide = window
+                    .app_handle()
+                    .try_state::<AppState>()
+                    .and_then(|state| state.settings())
+                    .is_some_and(|settings| settings.minimize_to_tray);
+                if hide {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             get_bootstrap,
@@ -396,6 +752,8 @@ pub fn run() {
             add_to_watchlist,
             remove_from_watchlist,
             list_watchlist,
+            list_watchlist_samples,
+            export_sessions,
             fetch_game_metadata,
             sync_game_metadata,
             search_roblox_users,
@@ -409,6 +767,10 @@ pub fn run() {
             get_game_servers,
             search_catalog,
             get_catalog_item,
+            set_autostart,
+            check_for_update,
+            discord_connect,
+            discord_clear,
             launch_roblox
         ])
         .run(tauri::generate_context!())
