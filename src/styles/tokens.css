@@ -51,7 +51,7 @@
 
   --rv-rail-width: 68px;
   --rv-rail-width-expanded: 208px;
-  --rv-titlebar-height: 40px;
+  --rv-titlebar-height: 56px;
 
   /* Overwritten by [data-spacing]; every layout gap derives from these. */
   --rv-gap: 18px;

@@ -22,6 +22,7 @@ function session(overrides: Partial<Session> = {}): Session {
     result: "completed",
     possibleCrash: false,
     source: "revox",
+    gameInstanceId: null,
     ...overrides,
   };
 }

@@ -109,8 +109,59 @@ fn migration_is_idempotent() {
             .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| row
                 .get::<_, i64>(0))
             .unwrap(),
-        2
+        3
     );
+}
+
+#[test]
+fn third_migration_adds_opt_in_tracking_and_the_watchlist() {
+    let (_directory, mut connection) = temporary_database();
+
+    apply_migrations(&mut connection).unwrap();
+
+    let settings = table_columns(&connection, "settings");
+    for column in ["stats_tracking_enabled", "roblox_user_id", "roblox_username"] {
+        assert!(settings.contains(column), "settings is missing {column}");
+    }
+    assert!(table_columns(&connection, "sessions").contains("game_instance_id"));
+
+    // Tracking must be off until the user turns it on.
+    assert_eq!(
+        connection
+            .query_row(
+                "SELECT stats_tracking_enabled FROM settings WHERE app_profile_id = 'default'",
+                [],
+                |row| row.get::<_, i64>(0)
+            )
+            .unwrap(),
+        0
+    );
+}
+
+#[test]
+fn the_watchlist_rejects_unknown_kinds_and_non_numeric_targets() {
+    let (_directory, mut connection) = temporary_database();
+    apply_migrations(&mut connection).unwrap();
+
+    let good = connection.execute(
+        "INSERT INTO watchlist (id, app_profile_id, kind, target_id, label)
+         VALUES ('w1', 'default', 'user', '261', 'Shedletsky')",
+        [],
+    );
+    let bad_kind = connection.execute(
+        "INSERT INTO watchlist (id, app_profile_id, kind, target_id, label)
+         VALUES ('w2', 'default', 'clan', '261', 'Nope')",
+        [],
+    );
+    let bad_target = connection.execute(
+        "INSERT INTO watchlist (id, app_profile_id, kind, target_id, label)
+         VALUES ('w3', 'default', 'user', '2 OR 1=1', 'Nope')",
+        [],
+    );
+
+    assert!(good.is_ok());
+    assert!(bad_kind.is_err());
+    assert!(bad_target.is_err());
 }
 
 #[test]

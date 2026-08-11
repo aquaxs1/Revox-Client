@@ -129,11 +129,107 @@ describe("launching in the browser preview", () => {
   });
 });
 
-describe("metadata in the browser preview", () => {
-  it("reports that Roblox lookups need the desktop app", async () => {
-    await expect(backend.fetchGameMetadata("123")).rejects.toMatchObject({
-      code: "METADATA_UNREACHABLE",
+describe("Roblox lookups in the browser preview", () => {
+  it("report that they need the desktop app instead of returning fake data", async () => {
+    const calls = [
+      backend.fetchGameMetadata("123"),
+      backend.searchUsers("builderman"),
+      backend.getUserStats("261"),
+      backend.getFriends("261"),
+      backend.searchGames("doors"),
+      backend.getGameStats("123"),
+      backend.getGameServers("123"),
+      backend.searchCatalog("hat"),
+      backend.getCatalogItem("123"),
+    ];
+
+    for (const call of calls) {
+      await expect(call).rejects.toMatchObject({ code: "API_UNREACHABLE" });
+    }
+  });
+});
+
+describe("the watchlist", () => {
+  it("deduplicates a target and refreshes its label", async () => {
+    const first = await backend.addToWatchlist({
+      kind: "user",
+      targetId: "261",
+      label: "Shedletsky",
+      imageUrl: null,
     });
+    const again = await backend.addToWatchlist({
+      kind: "user",
+      targetId: "261",
+      label: "New label",
+      imageUrl: "https://tr.rbxcdn.com/x",
+    });
+
+    expect(again.id).toBe(first.id);
+    expect(again.label).toBe("New label");
+    expect(await backend.listWatchlist()).toHaveLength(1);
+  });
+
+  it("rejects unknown kinds and non-numeric targets", async () => {
+    await expect(
+      backend.addToWatchlist({
+        // @ts-expect-error deliberately invalid kind
+        kind: "clan",
+        targetId: "261",
+        label: "x",
+        imageUrl: null,
+      }),
+    ).rejects.toBeInstanceOf(BackendError);
+    await expect(
+      backend.addToWatchlist({
+        kind: "user",
+        targetId: "261 OR 1=1",
+        label: "x",
+        imageUrl: null,
+      }),
+    ).rejects.toBeInstanceOf(BackendError);
+  });
+
+  it("errors when removing something that is not on the list", async () => {
+    await expect(backend.removeFromWatchlist("nope")).rejects.toBeInstanceOf(
+      BackendError,
+    );
+  });
+});
+
+describe("linking a Roblox profile", () => {
+  it("only accepts a numeric user ID", async () => {
+    await expect(
+      backend.saveSettings({ robloxUserId: "not-an-id" }),
+    ).rejects.toBeInstanceOf(BackendError);
+
+    const settings = await backend.saveSettings({
+      robloxUserId: "261",
+      robloxUsername: "Shedletsky",
+    });
+    expect(settings.robloxUserId).toBe("261");
+  });
+});
+
+describe("rejoining a specific server", () => {
+  it("builds the protocol URL with the instance and refuses a fake one", async () => {
+    const receipt = await backend.launchRoblox({
+      placeId: "920587237",
+      gameId: null,
+      accountProfileId: null,
+      gameInstanceId: "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0",
+    });
+    expect(receipt.uri).toBe(
+      "roblox://placeId=920587237&gameInstanceId=0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0",
+    );
+
+    await expect(
+      backend.launchRoblox({
+        placeId: "920587237",
+        gameId: null,
+        accountProfileId: null,
+        gameInstanceId: "not-a-uuid",
+      }),
+    ).rejects.toThrow();
   });
 });
 

@@ -32,9 +32,32 @@ export function parsePlaceId(input: string): string | null {
   }
 }
 
-export function buildLaunchUrl(placeId: string): string {
+const INSTANCE_ID_PATTERN =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/** Roblox server instance IDs are UUIDs. Mirrors `valid_instance_id` in Rust. */
+export function validInstanceId(value: string): boolean {
+  return INSTANCE_ID_PATTERN.test(value);
+}
+
+/**
+ * Builds the official protocol URL, optionally targeting one specific server.
+ *
+ * Both parts are validated before they reach the URL, so neither a typed value
+ * nor a Roblox response can append further parameters to it.
+ */
+export function buildLaunchUrl(
+  placeId: string,
+  gameInstanceId: string | null = null,
+): string {
   if (!PLACE_ID_PATTERN.test(placeId)) {
     throw new Error("Invalid Place ID");
   }
-  return `roblox://placeId=${placeId}`;
+  if (gameInstanceId === null) {
+    return `roblox://placeId=${placeId}`;
+  }
+  if (!validInstanceId(gameInstanceId)) {
+    throw new Error("Invalid server instance ID");
+  }
+  return `roblox://placeId=${placeId}&gameInstanceId=${gameInstanceId}`;
 }

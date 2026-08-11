@@ -94,6 +94,7 @@ pub struct FinishedSession {
     pub duration_seconds: i64,
     pub possible_crash: bool,
     pub source: String,
+    pub game_instance_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -109,6 +110,7 @@ pub struct Session {
     pub result: String,
     pub possible_crash: bool,
     pub source: String,
+    pub game_instance_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -135,6 +137,27 @@ pub struct Activity {
     pub created_at: String,
 }
 
+/// A profile, experience or catalog item the user follows in the stats viewer.
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct WatchlistEntry {
+    pub id: String,
+    pub kind: String,
+    pub target_id: String,
+    pub label: String,
+    pub image_url: Option<String>,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct WatchlistInput {
+    pub kind: String,
+    pub target_id: String,
+    pub label: String,
+    pub image_url: Option<String>,
+}
+
 /// Everything the UI needs for a cold start, in one round trip.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -145,6 +168,7 @@ pub struct AppBootstrap {
     pub account_games: Vec<AccountGame>,
     pub sessions: Vec<Session>,
     pub activities: Vec<Activity>,
+    pub watchlist: Vec<WatchlistEntry>,
 }
 
 pub trait Repository: Send + Sync {
@@ -169,6 +193,9 @@ pub trait Repository: Send + Sync {
     fn record_activity(&self, input: ActivityInput) -> Result<Activity, AppError>;
     fn finish_session(&self, input: FinishedSession) -> Result<Session, AppError>;
     fn list_sessions(&self) -> Result<Vec<Session>, AppError>;
+    fn add_to_watchlist(&self, input: WatchlistInput) -> Result<WatchlistEntry, AppError>;
+    fn remove_from_watchlist(&self, id: &str) -> Result<(), AppError>;
+    fn list_watchlist(&self) -> Result<Vec<WatchlistEntry>, AppError>;
 }
 
 pub struct SqliteRepository {
@@ -251,7 +278,7 @@ impl Repository for SqliteRepository {
         let sessions = collect_rows(
             &connection,
             "SELECT id, account_profile_id, game_id, place_id, started_at, ended_at,
-                    duration_seconds, result, possible_crash, source
+                    duration_seconds, result, possible_crash, source, game_instance_id
              FROM sessions WHERE app_profile_id = ?1 ORDER BY started_at DESC, id
              LIMIT 500",
             session_from_row,
@@ -264,6 +291,13 @@ impl Repository for SqliteRepository {
             activity_from_row,
         )?;
 
+        let watchlist = collect_rows(
+            &connection,
+            "SELECT id, kind, target_id, label, image_url, created_at
+             FROM watchlist WHERE app_profile_id = ?1 ORDER BY created_at DESC, id",
+            watchlist_from_row,
+        )?;
+
         Ok(AppBootstrap {
             settings,
             accounts,
@@ -271,6 +305,7 @@ impl Repository for SqliteRepository {
             account_games,
             sessions,
             activities,
+            watchlist,
         })
     }
 
@@ -344,12 +379,31 @@ impl Repository for SqliteRepository {
         if let Some(value) = input.selected_account_id {
             current.selected_account_id = value;
         }
+        if let Some(value) = input.stats_tracking_enabled {
+            current.stats_tracking_enabled = value;
+        }
+        if let Some(value) = input.roblox_user_id {
+            if let Some(id) = &value {
+                if !crate::api::valid_id(id) {
+                    return Err(AppError::new(
+                        "INVALID_ROBLOX_ID",
+                        "A Roblox user ID must contain 1 to 20 digits",
+                    ));
+                }
+            }
+            current.roblox_user_id = value;
+        }
+        if let Some(value) = input.roblox_username {
+            current.roblox_username = value;
+        }
 
         connection
             .execute(
                 "UPDATE settings SET locale = ?2, theme = ?3, accent = ?4, spacing = ?5,
                    sidebar_expanded = ?6, onboarding_complete = ?7, robux_spent = ?8,
-                   selected_account_id = ?9, updated_at = CURRENT_TIMESTAMP
+                   selected_account_id = ?9, stats_tracking_enabled = ?10,
+                   roblox_user_id = ?11, roblox_username = ?12,
+                   updated_at = CURRENT_TIMESTAMP
                  WHERE app_profile_id = ?1",
                 params![
                     APP_PROFILE,
@@ -360,7 +414,10 @@ impl Repository for SqliteRepository {
                     current.sidebar_expanded,
                     current.onboarding_complete,
                     current.robux_spent,
-                    current.selected_account_id
+                    current.selected_account_id,
+                    current.stats_tracking_enabled,
+                    current.roblox_user_id,
+                    current.roblox_username
                 ],
             )
             .map_err(database_error)?;
@@ -629,8 +686,9 @@ impl Repository for SqliteRepository {
             .execute(
                 "INSERT INTO sessions
                    (id, app_profile_id, account_profile_id, game_id, place_id, started_at,
-                    ended_at, duration_seconds, result, possible_crash, source)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                    ended_at, duration_seconds, result, possible_crash, source,
+                    game_instance_id)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
                 params![
                     id,
                     APP_PROFILE,
@@ -642,7 +700,8 @@ impl Repository for SqliteRepository {
                     input.duration_seconds,
                     result,
                     input.possible_crash,
-                    input.source
+                    input.source,
+                    input.game_instance_id
                 ],
             )
             .map_err(database_error)?;
@@ -682,7 +741,81 @@ impl Repository for SqliteRepository {
             result: result.to_string(),
             possible_crash: input.possible_crash,
             source: input.source,
+            game_instance_id: input.game_instance_id,
         })
+    }
+
+    fn add_to_watchlist(&self, input: WatchlistInput) -> Result<WatchlistEntry, AppError> {
+        if !matches!(input.kind.as_str(), "user" | "game" | "asset") {
+            return Err(AppError::new(
+                "INVALID_WATCHLIST_KIND",
+                "Watchlist kind must be user, game or asset",
+            ));
+        }
+        if !crate::api::valid_id(&input.target_id) {
+            return Err(AppError::new(
+                "INVALID_ROBLOX_ID",
+                "A Roblox ID must contain 1 to 20 digits",
+            ));
+        }
+        let id = uuid::Uuid::new_v4().to_string();
+        let created_at = Utc::now().to_rfc3339();
+        let connection = self.connection.lock().map_err(lock_error)?;
+
+        // Following the same target twice keeps the original entry and simply
+        // refreshes its label and picture.
+        connection
+            .execute(
+                "INSERT INTO watchlist
+                   (id, app_profile_id, kind, target_id, label, image_url, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+                 ON CONFLICT(app_profile_id, kind, target_id) DO UPDATE SET
+                   label = excluded.label,
+                   image_url = excluded.image_url",
+                params![
+                    id,
+                    APP_PROFILE,
+                    input.kind,
+                    input.target_id,
+                    input.label.trim(),
+                    input.image_url,
+                    created_at
+                ],
+            )
+            .map_err(database_error)?;
+
+        connection
+            .query_row(
+                "SELECT id, kind, target_id, label, image_url, created_at
+                 FROM watchlist WHERE app_profile_id = ?1 AND kind = ?2 AND target_id = ?3",
+                params![APP_PROFILE, input.kind, input.target_id],
+                watchlist_from_row,
+            )
+            .map_err(database_error)
+    }
+
+    fn remove_from_watchlist(&self, id: &str) -> Result<(), AppError> {
+        let connection = self.connection.lock().map_err(lock_error)?;
+        let deleted = connection
+            .execute("DELETE FROM watchlist WHERE id = ?1", [id])
+            .map_err(database_error)?;
+        if deleted == 0 {
+            return Err(AppError::new(
+                "WATCHLIST_ENTRY_NOT_FOUND",
+                "This watchlist entry no longer exists",
+            ));
+        }
+        Ok(())
+    }
+
+    fn list_watchlist(&self) -> Result<Vec<WatchlistEntry>, AppError> {
+        let connection = self.connection.lock().map_err(lock_error)?;
+        collect_rows(
+            &connection,
+            "SELECT id, kind, target_id, label, image_url, created_at
+             FROM watchlist WHERE app_profile_id = ?1 ORDER BY created_at DESC, id",
+            watchlist_from_row,
+        )
     }
 
     fn list_sessions(&self) -> Result<Vec<Session>, AppError> {
@@ -690,7 +823,7 @@ impl Repository for SqliteRepository {
         collect_rows(
             &connection,
             "SELECT id, account_profile_id, game_id, place_id, started_at, ended_at,
-                    duration_seconds, result, possible_crash, source
+                    duration_seconds, result, possible_crash, source, game_instance_id
              FROM sessions WHERE app_profile_id = ?1 ORDER BY started_at DESC, id
              LIMIT 500",
             session_from_row,
@@ -724,7 +857,8 @@ fn read_settings(connection: &Connection) -> Result<AppSettings, AppError> {
     connection
         .query_row(
             "SELECT locale, theme, accent, spacing, sidebar_expanded, onboarding_complete,
-                    robux_spent, selected_account_id
+                    robux_spent, selected_account_id, stats_tracking_enabled,
+                    roblox_user_id, roblox_username
              FROM settings WHERE app_profile_id = ?1",
             [APP_PROFILE],
             |row| {
@@ -737,6 +871,9 @@ fn read_settings(connection: &Connection) -> Result<AppSettings, AppError> {
                     onboarding_complete: row.get(5)?,
                     robux_spent: row.get(6)?,
                     selected_account_id: row.get(7)?,
+                    stats_tracking_enabled: row.get(8)?,
+                    roblox_user_id: row.get(9)?,
+                    roblox_username: row.get(10)?,
                 })
             },
         )
@@ -822,6 +959,18 @@ fn session_from_row(row: &Row<'_>) -> rusqlite::Result<Session> {
         result: row.get(7)?,
         possible_crash: row.get(8)?,
         source: row.get(9)?,
+        game_instance_id: row.get(10)?,
+    })
+}
+
+fn watchlist_from_row(row: &Row<'_>) -> rusqlite::Result<WatchlistEntry> {
+    Ok(WatchlistEntry {
+        id: row.get(0)?,
+        kind: row.get(1)?,
+        target_id: row.get(2)?,
+        label: row.get(3)?,
+        image_url: row.get(4)?,
+        created_at: row.get(5)?,
     })
 }
 

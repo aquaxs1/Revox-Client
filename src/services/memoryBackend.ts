@@ -12,6 +12,8 @@ import type {
   LaunchRequest,
   Session,
   SettingsInput,
+  WatchlistEntry,
+  WatchlistInput,
 } from "../contracts/entities";
 import { buildLaunchUrl, validPlaceId } from "../domain/roblox";
 import { BackendError } from "./backend";
@@ -25,6 +27,7 @@ interface PreviewData {
   accountGames: AccountGame[];
   sessions: Session[];
   activities: Activity[];
+  watchlist: WatchlistEntry[];
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -36,6 +39,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   onboardingComplete: false,
   robuxSpent: 0,
   selectedAccountId: null,
+  statsTrackingEnabled: false,
+  robloxUserId: null,
+  robloxUsername: null,
 };
 
 function emptyData(): PreviewData {
@@ -46,6 +52,7 @@ function emptyData(): PreviewData {
     accountGames: [],
     sessions: [],
     activities: [],
+    watchlist: [],
   };
 }
 
@@ -130,7 +137,16 @@ export function createMemoryBackend(
       accountGames: [...data.accountGames],
       sessions: [...data.sessions],
       activities: [...data.activities],
+      watchlist: [...data.watchlist],
     };
+  }
+
+  /** Every Roblox lookup is blocked by CORS in a browser. */
+  function offline(): never {
+    throw new BackendError(
+      "API_UNREACHABLE",
+      "Roblox lookups are only available in the desktop app",
+    );
   }
 
   return {
@@ -156,6 +172,16 @@ export function createMemoryBackend(
       }
       if (input.robuxSpent !== undefined && input.robuxSpent < 0) {
         throw new BackendError("INVALID_ROBUX", "Recorded Robux must not be negative");
+      }
+      if (
+        input.robloxUserId !== undefined &&
+        input.robloxUserId !== null &&
+        !/^\d{1,20}$/.test(input.robloxUserId)
+      ) {
+        throw new BackendError(
+          "INVALID_ROBLOX_ID",
+          "A Roblox user ID must contain 1 to 20 digits",
+        );
       }
 
       data.settings = { ...data.settings, ...input };
@@ -313,24 +339,90 @@ export function createMemoryBackend(
       return [...data.sessions];
     },
 
-    async fetchGameMetadata() {
-      // Roblox blocks browser-origin requests, so the preview cannot look a
-      // place up. The desktop build does this in Rust.
-      throw new BackendError(
-        "METADATA_UNREACHABLE",
-        "Roblox metadata is only available in the desktop app",
+    async addToWatchlist(input: WatchlistInput) {
+      if (!["user", "game", "asset"].includes(input.kind)) {
+        throw new BackendError("INVALID_WATCHLIST_KIND", "Unknown watchlist kind");
+      }
+      if (!/^\d{1,20}$/.test(input.targetId)) {
+        throw new BackendError("INVALID_ROBLOX_ID", "A Roblox ID must be numeric");
+      }
+      const existing = data.watchlist.find(
+        (entry) => entry.kind === input.kind && entry.targetId === input.targetId,
       );
+      const entry: WatchlistEntry = {
+        id: existing?.id ?? randomId(),
+        kind: input.kind,
+        targetId: input.targetId,
+        label: input.label.trim(),
+        imageUrl: input.imageUrl,
+        createdAt: existing?.createdAt ?? new Date().toISOString(),
+      };
+      data.watchlist = existing
+        ? data.watchlist.map((item) => (item.id === entry.id ? entry : item))
+        : [entry, ...data.watchlist];
+      persist();
+      return entry;
     },
 
+    async removeFromWatchlist(id: string) {
+      if (!data.watchlist.some((entry) => entry.id === id)) {
+        throw new BackendError(
+          "WATCHLIST_ENTRY_NOT_FOUND",
+          "This watchlist entry no longer exists",
+        );
+      }
+      data.watchlist = data.watchlist.filter((entry) => entry.id !== id);
+      persist();
+    },
+
+    async listWatchlist() {
+      return [...data.watchlist];
+    },
+
+    // Roblox blocks browser-origin requests, so the preview cannot reach any of
+    // these. The desktop build performs them in Rust.
+    async fetchGameMetadata() {
+      return offline();
+    },
     async syncGameMetadata() {
-      throw new BackendError(
-        "METADATA_UNREACHABLE",
-        "Roblox metadata is only available in the desktop app",
-      );
+      return offline();
+    },
+    async searchUsers() {
+      return offline();
+    },
+    async getUserStats() {
+      return offline();
+    },
+    async getUserByUsername() {
+      return offline();
+    },
+    async getFriends() {
+      return offline();
+    },
+    async getPresence() {
+      return offline();
+    },
+    async searchGames() {
+      return offline();
+    },
+    async getGameStats() {
+      return offline();
+    },
+    async getGameStatsForPlace() {
+      return offline();
+    },
+    async getGameServers() {
+      return offline();
+    },
+    async searchCatalog() {
+      return offline();
+    },
+    async getCatalogItem() {
+      return offline();
     },
 
     async launchRoblox(input: LaunchRequest) {
-      const uri = buildLaunchUrl(input.placeId);
+      const uri = buildLaunchUrl(input.placeId, input.gameInstanceId ?? null);
       const activity = await this.recordActivity({
         accountProfileId: input.accountProfileId,
         gameId: input.gameId,

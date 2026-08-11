@@ -7,6 +7,8 @@ import { Toast, type ToastMessage } from "./components/Toast";
 import type { Game } from "./contracts/entities";
 import { I18nProvider, useI18n } from "./i18n";
 import { ExitPage } from "./pages/Exit";
+import { ExplorePage } from "./pages/Explore";
+import { FriendsPage } from "./pages/Friends";
 import { PlayPage } from "./pages/Play";
 import { ProfilePage } from "./pages/Profile";
 import { SavedPage } from "./pages/Saved";
@@ -39,7 +41,7 @@ function useResolvedTheme(theme: string) {
 
 function Workspace() {
   const { t, translateError } = useI18n();
-  const { state, launch, reload, refreshRobloxStatus } = useAppStore();
+  const { state, launch, launchPlace, reload, refreshRobloxStatus } = useAppStore();
   const account = useSelectedAccount();
   const [page, setPage] = useState<PageId>("play");
   const [pendingLaunch, setPendingLaunch] = useState<Game | null>(null);
@@ -95,6 +97,28 @@ function Workspace() {
     }
   }, [launch, pendingLaunch, t, translateError]);
 
+  /** Re-enters a place directly, bypassing the confirmation dialog. */
+  const rejoin = useCallback(
+    async (placeId: string, gameInstanceId: string | null) => {
+      try {
+        await launchPlace(placeId, gameInstanceId);
+        setToast({
+          tone: "success",
+          text: isTauri()
+            ? t("launch.success", { name: placeId })
+            : t("launch.preview", { name: placeId }),
+        });
+      } catch (reason) {
+        const failure = toBackendError(reason);
+        setToast({
+          tone: "error",
+          text: translateError(failure.code, failure.message),
+        });
+      }
+    },
+    [launchPlace, t, translateError],
+  );
+
   if (state.status === "loading") {
     return <div className="rv-loading">{t("common.loading")}</div>;
   }
@@ -132,6 +156,14 @@ function Workspace() {
     case "stats":
       content = <StatsPage />;
       break;
+    case "explore":
+      content = (
+        <ExplorePage onToast={(text, tone) => setToast({ text, tone })} />
+      );
+      break;
+    case "friends":
+      content = <FriendsPage onOpenSettings={() => setPage("settings")} />;
+      break;
     case "settings":
       content = <SettingsPage />;
       break;
@@ -143,6 +175,8 @@ function Workspace() {
         <PlayPage
           onLaunch={setPendingLaunch}
           onAddGame={() => setAddingGame(true)}
+          onRejoin={(placeId, instanceId) => void rejoin(placeId, instanceId)}
+          onOpenSettings={() => setPage("settings")}
         />
       );
   }

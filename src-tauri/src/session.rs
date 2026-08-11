@@ -15,6 +15,9 @@ pub struct PendingLaunch {
     pub place_id: Option<String>,
     pub game_id: Option<String>,
     pub account_profile_id: Option<String>,
+    /// Set when the launch targeted one specific server, so the stored session
+    /// can offer a rejoin to that same server later.
+    pub game_instance_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -81,6 +84,14 @@ impl SessionMachine {
 
     pub fn is_running(&self) -> bool {
         matches!(self.state, MachineState::Running { .. })
+    }
+
+    /// Drops any armed or running session without recording it.
+    ///
+    /// Used when the user turns playtime tracking off mid-session: the half
+    /// measured session is discarded rather than written.
+    pub fn reset(&mut self) {
+        self.state = MachineState::Idle;
     }
 
     /// Records that the user just launched something. Re-arming while a
@@ -168,6 +179,7 @@ mod tests {
             place_id: Some("920587237".to_string()),
             game_id: Some("game-1".to_string()),
             account_profile_id: Some("account-1".to_string()),
+            game_instance_id: None,
         }
     }
 
@@ -265,6 +277,19 @@ mod tests {
                 possible_crash: true,
             })
         );
+    }
+
+    #[test]
+    fn reset_discards_a_running_session_without_recording_it() {
+        let mut machine = SessionMachine::with_timings(10_000, 1_000);
+        machine.arm(launch(), 0);
+        machine.tick(1_000, true);
+        assert!(machine.is_running());
+
+        machine.reset();
+
+        assert!(machine.is_idle());
+        assert_eq!(machine.tick(90_000, false), None);
     }
 
     #[test]

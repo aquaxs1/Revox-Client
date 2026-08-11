@@ -7,6 +7,7 @@ use crate::error::AppError;
 const MIGRATIONS: &[(i64, &str)] = &[
     (1, include_str!("../../migrations/0001_core.sql")),
     (2, include_str!("../../migrations/0002_revox.sql")),
+    (3, include_str!("../../migrations/0003_explorer.sql")),
 ];
 
 pub fn apply_migrations(connection: &mut Connection) -> Result<(), AppError> {

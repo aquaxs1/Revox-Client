@@ -6,15 +6,25 @@ import type {
   ActivityInput,
   AppBootstrap,
   AppSettings,
+  CatalogItem,
+  FriendEntry,
   Game,
   GameInput,
   GameMetadata,
+  GameServer,
+  GameStats,
+  GameSummary,
   LaunchReceipt,
   LaunchRequest,
   RobloxStatus,
+  RobloxUser,
   Session,
   SettingsInput,
   SystemSnapshot,
+  UserPresence,
+  UserStats,
+  WatchlistEntry,
+  WatchlistInput,
 } from "./entities";
 
 /**
@@ -25,6 +35,7 @@ import type {
  * preview and by tests.
  */
 export interface BackendPort {
+  // Local data
   getBootstrap(): Promise<AppBootstrap>;
   saveSettings(input: SettingsInput): Promise<AppSettings>;
   getRobloxStatus(): Promise<RobloxStatus>;
@@ -40,7 +51,25 @@ export interface BackendPort {
   ): Promise<AccountGame>;
   recordActivity(input: ActivityInput): Promise<Activity>;
   listSessions(): Promise<Session[]>;
+  addToWatchlist(input: WatchlistInput): Promise<WatchlistEntry>;
+  removeFromWatchlist(id: string): Promise<void>;
+  listWatchlist(): Promise<WatchlistEntry[]>;
+
+  // Public Roblox data
   fetchGameMetadata(placeId: string): Promise<GameMetadata>;
   syncGameMetadata(gameId: string, placeId: string): Promise<Game>;
+  searchUsers(keyword: string): Promise<RobloxUser[]>;
+  getUserStats(userId: string): Promise<UserStats>;
+  getUserByUsername(username: string): Promise<RobloxUser>;
+  getFriends(userId: string): Promise<FriendEntry[]>;
+  getPresence(userIds: string[]): Promise<UserPresence[]>;
+  searchGames(keyword: string): Promise<GameSummary[]>;
+  getGameStats(universeId: string): Promise<GameStats>;
+  getGameStatsForPlace(placeId: string): Promise<GameStats>;
+  getGameServers(placeId: string): Promise<GameServer[]>;
+  searchCatalog(keyword: string): Promise<CatalogItem[]>;
+  getCatalogItem(assetId: string): Promise<CatalogItem>;
+
+  // Launching
   launchRoblox(input: LaunchRequest): Promise<LaunchReceipt>;
 }

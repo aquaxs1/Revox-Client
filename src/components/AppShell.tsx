@@ -2,12 +2,14 @@ import {
   BarChart3,
   Bookmark,
   ChevronDown,
+  Compass,
   LogOut,
   Minus,
   Play,
   Settings,
   Square,
   User,
+  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -24,13 +26,23 @@ import { useAppStore, useSelectedAccount } from "../state/AppStore";
 import { AccountMenu } from "./AccountMenu";
 import { Logo } from "./Logo";
 
-export type PageId = "play" | "profile" | "saved" | "stats" | "settings" | "exit";
+export type PageId =
+  | "play"
+  | "profile"
+  | "saved"
+  | "stats"
+  | "explore"
+  | "friends"
+  | "settings"
+  | "exit";
 
 const NAV_ITEMS: Array<{ id: PageId; icon: LucideIcon; label: TranslationKey }> = [
   { id: "play", icon: Play, label: "nav.play" },
   { id: "profile", icon: User, label: "nav.profile" },
   { id: "saved", icon: Bookmark, label: "nav.saved" },
   { id: "stats", icon: BarChart3, label: "nav.stats" },
+  { id: "explore", icon: Compass, label: "nav.explore" },
+  { id: "friends", icon: Users, label: "nav.friends" },
   { id: "settings", icon: Settings, label: "nav.settings" },
 ];
 
@@ -39,6 +51,8 @@ const PAGE_TITLES: Record<PageId, TranslationKey> = {
   profile: "profile.title",
   saved: "saved.title",
   stats: "stats.title",
+  explore: "explore.title",
+  friends: "friends.title",
   settings: "settings.title",
   exit: "exit.title",
 };
@@ -85,8 +99,6 @@ export function AppShell({
               {expanded && <span>{t(label)}</span>}
             </button>
           ))}
-
-          <div className="rv-nav-spacer" />
 
           <button
             className="rv-nav-button is-exit"

@@ -1,7 +1,7 @@
+pub mod api;
 pub mod contracts;
 pub mod db;
 pub mod error;
-pub mod metadata;
 pub mod roblox;
 pub mod session;
 
@@ -10,12 +10,14 @@ use std::time::{Duration, Instant};
 
 use chrono::Utc;
 use contracts::{
-    AppSettings, GameMetadata, LaunchReceipt, LaunchRequest, RobloxStatus, SettingsInput,
-    SystemSnapshot,
+    AppSettings, CatalogItem, FriendEntry, GameMetadata, GameServer, GameStats, GameSummary,
+    LaunchReceipt, LaunchRequest, RobloxStatus, RobloxUser, SettingsInput, SystemSnapshot,
+    UserPresence, UserStats,
 };
 use db::repository::{
     AccountGame, AccountInput, AccountProfile, Activity, ActivityInput, AppBootstrap,
-    FinishedSession, Game, GameInput, Repository, Session, SqliteRepository,
+    FinishedSession, Game, GameInput, Repository, Session, SqliteRepository, WatchlistEntry,
+    WatchlistInput,
 };
 use error::AppError;
 use roblox::{detect_roblox, launch_official, system::HostSystem, RobloxSystem};
@@ -40,13 +42,24 @@ impl AppState {
     fn now_ms(&self) -> u64 {
         self.started.elapsed().as_millis() as u64
     }
+
+    fn tracking_enabled(&self) -> bool {
+        self.repository
+            .settings()
+            .map(|settings| settings.stats_tracking_enabled)
+            .unwrap_or(false)
+    }
 }
 
-fn lock_machine(machine: &Mutex<SessionMachine>) -> Result<std::sync::MutexGuard<'_, SessionMachine>, AppError> {
+fn lock_machine(
+    machine: &Mutex<SessionMachine>,
+) -> Result<std::sync::MutexGuard<'_, SessionMachine>, AppError> {
     machine
         .lock()
         .map_err(|error| AppError::new("SESSION_LOCK_FAILED", error.to_string()))
 }
+
+// ------------------------------------------------------------------- local --
 
 #[tauri::command]
 fn get_bootstrap(state: tauri::State<'_, AppState>) -> Result<AppBootstrap, AppError> {
@@ -124,8 +137,28 @@ fn list_sessions(state: tauri::State<'_, AppState>) -> Result<Vec<Session>, AppE
 }
 
 #[tauri::command]
+fn add_to_watchlist(
+    state: tauri::State<'_, AppState>,
+    input: WatchlistInput,
+) -> Result<WatchlistEntry, AppError> {
+    state.repository.add_to_watchlist(input)
+}
+
+#[tauri::command]
+fn remove_from_watchlist(state: tauri::State<'_, AppState>, id: String) -> Result<(), AppError> {
+    state.repository.remove_from_watchlist(&id)
+}
+
+#[tauri::command]
+fn list_watchlist(state: tauri::State<'_, AppState>) -> Result<Vec<WatchlistEntry>, AppError> {
+    state.repository.list_watchlist()
+}
+
+// ------------------------------------------------------------- roblox data --
+
+#[tauri::command]
 async fn fetch_game_metadata(place_id: String) -> Result<GameMetadata, AppError> {
-    metadata::fetch_metadata(&place_id).await
+    api::games::metadata(&place_id).await
 }
 
 /// Looks the place up on Roblox and writes the result onto the stored game.
@@ -135,18 +168,79 @@ async fn sync_game_metadata(
     game_id: String,
     place_id: String,
 ) -> Result<Game, AppError> {
-    let fetched = metadata::fetch_metadata(&place_id).await?;
+    let fetched = api::games::metadata(&place_id).await?;
     state.repository.update_metadata(&game_id, &fetched)
 }
 
-/// Hands a validated place over to the official Roblox client and arms the
-/// session monitor so the resulting playtime is recorded.
+#[tauri::command]
+async fn search_roblox_users(keyword: String) -> Result<Vec<RobloxUser>, AppError> {
+    api::users::search(&keyword).await
+}
+
+#[tauri::command]
+async fn get_user_stats(user_id: String) -> Result<UserStats, AppError> {
+    api::users::stats(&user_id).await
+}
+
+#[tauri::command]
+async fn get_user_by_username(username: String) -> Result<RobloxUser, AppError> {
+    api::users::by_username(&username).await
+}
+
+#[tauri::command]
+async fn get_friends(user_id: String) -> Result<Vec<FriendEntry>, AppError> {
+    api::users::friends(&user_id).await
+}
+
+#[tauri::command]
+async fn get_presence(user_ids: Vec<String>) -> Result<Vec<UserPresence>, AppError> {
+    api::users::presence(&user_ids).await
+}
+
+#[tauri::command]
+async fn search_roblox_games(keyword: String) -> Result<Vec<GameSummary>, AppError> {
+    api::games::search(&keyword).await
+}
+
+#[tauri::command]
+async fn get_game_stats(universe_id: String) -> Result<GameStats, AppError> {
+    api::games::stats(&universe_id).await
+}
+
+#[tauri::command]
+async fn get_game_stats_for_place(place_id: String) -> Result<GameStats, AppError> {
+    api::games::stats_for_place(&place_id).await
+}
+
+#[tauri::command]
+async fn get_game_servers(place_id: String) -> Result<Vec<GameServer>, AppError> {
+    api::games::servers(&place_id).await
+}
+
+#[tauri::command]
+async fn search_catalog(keyword: String) -> Result<Vec<CatalogItem>, AppError> {
+    api::catalog::search(&keyword).await
+}
+
+#[tauri::command]
+async fn get_catalog_item(asset_id: String) -> Result<CatalogItem, AppError> {
+    api::catalog::item(&asset_id).await
+}
+
+// ----------------------------------------------------------------- launch --
+
+/// Hands a validated place over to the official Roblox client and, when
+/// tracking is enabled, arms the session monitor.
 #[tauri::command]
 fn launch_roblox(
     state: tauri::State<'_, AppState>,
     input: LaunchRequest,
 ) -> Result<LaunchReceipt, AppError> {
-    let uri = match launch_official(state.system.as_ref(), &input.place_id) {
+    let uri = match launch_official(
+        state.system.as_ref(),
+        &input.place_id,
+        input.game_instance_id.as_deref(),
+    ) {
         Ok(uri) => uri,
         Err(error) => {
             // A failed launch is still worth recording, so the user can see
@@ -172,14 +266,19 @@ fn launch_roblox(
         error_code: None,
     })?;
 
-    lock_machine(&state.machine)?.arm(
-        PendingLaunch {
-            place_id: Some(input.place_id.clone()),
-            game_id: input.game_id.clone(),
-            account_profile_id: input.account_profile_id.clone(),
-        },
-        state.now_ms(),
-    );
+    // With tracking off the monitor is never armed, so no session is written
+    // and no process is watched.
+    if state.tracking_enabled() {
+        lock_machine(&state.machine)?.arm(
+            PendingLaunch {
+                place_id: Some(input.place_id.clone()),
+                game_id: input.game_id.clone(),
+                account_profile_id: input.account_profile_id.clone(),
+                game_instance_id: input.game_instance_id.clone(),
+            },
+            state.now_ms(),
+        );
+    }
 
     Ok(LaunchReceipt {
         uri,
@@ -197,6 +296,16 @@ fn spawn_session_monitor(app: tauri::AppHandle) {
         let Some(state) = app.try_state::<AppState>() else {
             continue;
         };
+
+        // Tracking is opt-in. While it is off the monitor does not look at
+        // processes at all.
+        if !state.tracking_enabled() {
+            if let Ok(mut machine) = state.machine.lock() {
+                machine.reset();
+            }
+            continue;
+        }
+
         let running = state
             .system
             .running_processes()
@@ -240,6 +349,7 @@ fn spawn_session_monitor(app: tauri::AppHandle) {
                     duration_seconds,
                     possible_crash,
                     source: "revox".to_string(),
+                    game_instance_id: launch.game_instance_id,
                 });
             }
         }
@@ -283,8 +393,22 @@ pub fn run() {
             set_favorite,
             record_activity,
             list_sessions,
+            add_to_watchlist,
+            remove_from_watchlist,
+            list_watchlist,
             fetch_game_metadata,
             sync_game_metadata,
+            search_roblox_users,
+            get_user_stats,
+            get_user_by_username,
+            get_friends,
+            get_presence,
+            search_roblox_games,
+            get_game_stats,
+            get_game_stats_for_place,
+            get_game_servers,
+            search_catalog,
+            get_catalog_item,
             launch_roblox
         ])
         .run(tauri::generate_context!())

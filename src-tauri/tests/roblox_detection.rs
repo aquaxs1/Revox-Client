@@ -94,7 +94,7 @@ fn distinguishes_not_found_from_check_failure() {
 fn opens_only_the_exact_official_protocol_uri() {
     let system = FakeSystem::default();
 
-    let uri = launch_official(&system, "123456").unwrap();
+    let uri = launch_official(&system, "123456", None).unwrap();
 
     assert_eq!(uri, "roblox://placeId=123456");
     assert_eq!(system.opened.lock().unwrap().as_slice(), [uri]);
@@ -104,7 +104,7 @@ fn opens_only_the_exact_official_protocol_uri() {
 fn rejects_invalid_place_id_before_opening_anything() {
     let system = FakeSystem::default();
 
-    let error = launch_official(&system, "123 & calc.exe").unwrap_err();
+    let error = launch_official(&system, "123 & calc.exe", None).unwrap_err();
 
     assert_eq!(error.code, "INVALID_PLACE_ID");
     assert!(system.opened.lock().unwrap().is_empty());
@@ -121,4 +121,32 @@ fn only_the_roblox_player_counts_as_a_play_session() {
     assert!(!is_player_process("RobloxStudioBeta.exe"));
     assert!(!is_player_process("RobloxCrashHandler.exe"));
     assert!(!is_player_process("notepad.exe"));
+}
+
+#[test]
+fn rejoining_a_server_only_accepts_a_real_uuid() {
+    use revox_client_lib::roblox::build_launch_uri;
+
+    let instance = "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0";
+    assert_eq!(
+        build_launch_uri("123456", Some(instance)).unwrap(),
+        format!("roblox://placeId=123456&gameInstanceId={instance}")
+    );
+    assert_eq!(
+        build_launch_uri("123456", None).unwrap(),
+        "roblox://placeId=123456"
+    );
+
+    for bad in [
+        "not-a-uuid",
+        "0f1e2d3c4b5a69788796a5b4c3d2e1f0",
+        "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0&extra=1",
+        "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1fg",
+    ] {
+        assert_eq!(
+            build_launch_uri("123456", Some(bad)).unwrap_err().code,
+            "INVALID_INSTANCE_ID",
+            "{bad} should have been rejected"
+        );
+    }
 }

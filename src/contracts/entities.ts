@@ -13,6 +13,11 @@ export interface AppSettings {
   onboardingComplete: boolean;
   robuxSpent: number;
   selectedAccountId: string | null;
+  /** Playtime recording is off until the user turns it on. */
+  statsTrackingEnabled: boolean;
+  /** A public Roblox profile the friends screen reads. Never a login. */
+  robloxUserId: string | null;
+  robloxUsername: string | null;
 }
 
 /** Every field optional: patches touch only what they carry. */
@@ -25,6 +30,9 @@ export interface SettingsInput {
   onboardingComplete?: boolean;
   robuxSpent?: number;
   selectedAccountId?: string | null;
+  statsTrackingEnabled?: boolean;
+  robloxUserId?: string | null;
+  robloxUsername?: string | null;
 }
 
 export interface AccountProfile {
@@ -87,6 +95,7 @@ export interface Session {
   result: "running" | "completed" | "launchTimedOut" | "possibleCrash";
   possibleCrash: boolean;
   source: "revox" | "manual";
+  gameInstanceId: string | null;
 }
 
 export interface Activity {
@@ -116,6 +125,7 @@ export interface AppBootstrap {
   accountGames: AccountGame[];
   sessions: Session[];
   activities: Activity[];
+  watchlist: WatchlistEntry[];
 }
 
 export type RobloxState = "ready" | "notFound" | "running" | "checkFailed";
@@ -145,6 +155,8 @@ export interface LaunchRequest {
   placeId: string;
   gameId: string | null;
   accountProfileId: string | null;
+  /** Set to rejoin one specific server instead of any public server. */
+  gameInstanceId?: string | null;
 }
 
 export interface LaunchReceipt {
@@ -161,4 +173,131 @@ export interface GameMetadata {
   iconUrl: string | null;
   playing: number | null;
   visits: number | null;
+}
+
+// ---------------------------------------------------------------- explorer --
+
+export type WatchKind = "user" | "game" | "asset";
+
+export interface WatchlistEntry {
+  id: string;
+  kind: WatchKind;
+  targetId: string;
+  label: string;
+  imageUrl: string | null;
+  createdAt: string;
+}
+
+export interface WatchlistInput {
+  kind: WatchKind;
+  targetId: string;
+  label: string;
+  imageUrl: string | null;
+}
+
+export interface RobloxUser {
+  id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  created: string | null;
+  accountAgeDays: number | null;
+  hasVerifiedBadge: boolean;
+  isBanned: boolean;
+  avatarUrl: string | null;
+}
+
+export type PresenceState = "offline" | "online" | "inGame" | "inStudio" | "unknown";
+
+/**
+ * Where a user is right now, as far as Roblox tells an anonymous caller.
+ *
+ * `placeId` and `gameInstanceId` are often null: Roblox only reveals them when
+ * the user's join privacy allows it, so the join button appears only when both
+ * are actually present.
+ */
+export interface UserPresence {
+  userId: string;
+  state: PresenceState;
+  lastLocation: string | null;
+  placeId: string | null;
+  rootPlaceId: string | null;
+  gameInstanceId: string | null;
+  universeId: string | null;
+  lastOnline: string | null;
+}
+
+export interface UserStats {
+  user: RobloxUser;
+  followers: number | null;
+  following: number | null;
+  friends: number | null;
+  groups: number | null;
+  presence: UserPresence | null;
+}
+
+export interface FriendEntry {
+  user: RobloxUser;
+  presence: UserPresence | null;
+}
+
+export interface GameStats {
+  universeId: string;
+  rootPlaceId: string;
+  name: string;
+  description: string;
+  creatorId: string;
+  creatorName: string;
+  creatorType: string;
+  playing: number | null;
+  visits: number | null;
+  favorites: number | null;
+  upVotes: number | null;
+  downVotes: number | null;
+  maxPlayers: number | null;
+  created: string | null;
+  updated: string | null;
+  genre: string | null;
+  price: number | null;
+  iconUrl: string | null;
+}
+
+export interface GameSummary {
+  universeId: string;
+  rootPlaceId: string;
+  name: string;
+  creatorName: string;
+  playing: number | null;
+  upVotes: number | null;
+  downVotes: number | null;
+  iconUrl: string | null;
+}
+
+export interface GameServer {
+  id: string;
+  playing: number;
+  maxPlayers: number;
+  fps: number | null;
+  ping: number | null;
+}
+
+export interface CatalogItem {
+  id: string;
+  itemType: string;
+  name: string;
+  description: string;
+  creatorId: string;
+  creatorName: string;
+  price: number | null;
+  lowestPrice: number | null;
+  favoriteCount: number | null;
+  isLimited: boolean;
+  isLimitedUnique: boolean;
+  unitsAvailable: number | null;
+  created: string | null;
+  imageUrl: string | null;
+  recentAveragePrice: number | null;
+  originalPrice: number | null;
+  sales: number | null;
+  numberRemaining: number | null;
 }

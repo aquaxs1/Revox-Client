@@ -1,4 +1,4 @@
-import { AlertTriangle, Play as PlayIcon, Plus } from "lucide-react";
+import { AlertTriangle, Play as PlayIcon, Plus, RotateCcw } from "lucide-react";
 import { useMemo } from "react";
 import type { Game } from "../contracts/entities";
 import { mostRecentGame, splitDuration } from "../domain/stats";
@@ -12,9 +12,13 @@ const SESSION_COLORS = ["#F58A24", "#F5A524", "#35C759", "#2E9BF0", "#F2557A"];
 export function PlayPage({
   onLaunch,
   onAddGame,
+  onRejoin,
+  onOpenSettings,
 }: {
   onLaunch: (game: Game) => void;
   onAddGame: () => void;
+  onRejoin: (placeId: string, gameInstanceId: string | null) => void;
+  onOpenSettings: () => void;
 }) {
   const { t, locale } = useI18n();
   const { state, isFavorite, toggleFavorite, playtimeSeconds } = useAppStore();
@@ -126,6 +130,15 @@ export function PlayPage({
             <h2>{t("play.lastSessions")}</h2>
           </div>
 
+          {!state.settings.statsTrackingEnabled && (
+            <div className="rv-empty" style={{ marginBottom: "var(--rv-gap-sm)" }}>
+              <p>{t("play.trackingOff")}</p>
+              <button className="rv-button is-ghost" onClick={onOpenSettings}>
+                {t("play.enableTracking")}
+              </button>
+            </div>
+          )}
+
           {recentSessions.length === 0 ? (
             <div className="rv-empty">
               <p>{t("play.noSessions")}</p>
@@ -157,6 +170,22 @@ export function PlayPage({
                         <AlertTriangle size={12} />
                         {t("play.possibleCrash")}
                       </span>
+                    )}
+                    {session.placeId && (
+                      <button
+                        className="rv-button is-ghost rv-session-join"
+                        onClick={() =>
+                          onRejoin(session.placeId!, session.gameInstanceId)
+                        }
+                        title={
+                          session.gameInstanceId
+                            ? t("play.rejoinServer")
+                            : t("play.joinAgain")
+                        }
+                      >
+                        <RotateCcw size={14} />
+                        {t("play.joinAgain")}
+                      </button>
                     )}
                   </article>
                 );

@@ -3,15 +3,17 @@ import {
   Cpu,
   Info,
   Languages,
+  Link2,
   MonitorCog,
   RefreshCw,
   ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { Spacing, ThemeMode } from "../contracts/entities";
 import { useI18n } from "../i18n";
 import type { Locale, TranslationKey } from "../i18n/types";
+import { toBackendError } from "../services/backend";
 import { useAppStore } from "../state/AppStore";
 import { APP_VERSION } from "../version";
 
@@ -44,10 +46,14 @@ function formatBytes(bytes: number | null, locale: string): string | null {
 }
 
 export function SettingsPage() {
-  const { t, locale, setLocale } = useI18n();
-  const { state, saveSettings, refreshSystem } = useAppStore();
+  const { t, locale, setLocale, translateError } = useI18n();
+  const { state, saveSettings, refreshSystem, linkRobloxAccount, unlinkRobloxAccount } =
+    useAppStore();
   const { settings, system } = state;
   const [robux, setRobux] = useState(String(settings.robuxSpent));
+  const [robloxName, setRobloxName] = useState("");
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [linking, setLinking] = useState(false);
 
   useEffect(() => {
     setRobux(String(settings.robuxSpent));
@@ -69,6 +75,21 @@ export function SettingsPage() {
       return;
     }
     void saveSettings({ robuxSpent: parsed });
+  }
+
+  async function submitLink(event: FormEvent) {
+    event.preventDefault();
+    setLinking(true);
+    setLinkError(null);
+    try {
+      await linkRobloxAccount(robloxName);
+      setRobloxName("");
+    } catch (reason) {
+      const failure = toBackendError(reason);
+      setLinkError(translateError(failure.code, failure.message));
+    } finally {
+      setLinking(false);
+    }
   }
 
   const notAvailable = t("common.notAvailable");
@@ -178,12 +199,38 @@ export function SettingsPage() {
           <SlidersHorizontal size={20} aria-hidden />
           <div>
             <h2>{t("settings.tracking")}</h2>
-            <p>{t("settings.robuxBody")}</p>
+            <p>{t("settings.tracking.body")}</p>
           </div>
         </div>
+
+        <div className="rv-setting-row">
+          <div>
+            <strong>{t("settings.tracking.enable")}</strong>
+          </div>
+          <div
+            className="rv-segmented"
+            role="group"
+            aria-label={t("settings.tracking.enable")}
+          >
+            <button
+              aria-pressed={settings.statsTrackingEnabled}
+              onClick={() => void saveSettings({ statsTrackingEnabled: true })}
+            >
+              {t("settings.tracking.on")}
+            </button>
+            <button
+              aria-pressed={!settings.statsTrackingEnabled}
+              onClick={() => void saveSettings({ statsTrackingEnabled: false })}
+            >
+              {t("settings.tracking.off")}
+            </button>
+          </div>
+        </div>
+
         <div className="rv-setting-row">
           <div>
             <strong>{t("settings.robux")}</strong>
+            <span>{t("settings.robuxBody")}</span>
           </div>
           <input
             className="rv-input"
@@ -196,6 +243,56 @@ export function SettingsPage() {
             aria-label={t("settings.robux")}
           />
         </div>
+      </section>
+
+      <section className="rv-settings-section">
+        <div className="rv-settings-title">
+          <Link2 size={20} aria-hidden />
+          <div>
+            <h2>{t("settings.robloxAccount")}</h2>
+            <p>{t("settings.robloxAccountBody")}</p>
+          </div>
+        </div>
+
+        {settings.robloxUserId ? (
+          <div className="rv-setting-row">
+            <div>
+              <strong>
+                {t("settings.robloxAccount.linked", {
+                  name: settings.robloxUsername ?? "?",
+                  id: settings.robloxUserId,
+                })}
+              </strong>
+            </div>
+            <button
+              className="rv-button"
+              onClick={() => void unlinkRobloxAccount()}
+            >
+              {t("settings.robloxAccount.unlink")}
+            </button>
+          </div>
+        ) : (
+          <form className="rv-setting-row" onSubmit={submitLink}>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <label className="rv-field">
+                <span style={{ fontSize: 12, fontWeight: 600 }}>
+                  {t("settings.robloxAccount.placeholder")}
+                </span>
+                <input
+                  className="rv-input"
+                  value={robloxName}
+                  onChange={(event) => setRobloxName(event.target.value)}
+                  placeholder="Builderman"
+                  required
+                />
+              </label>
+              {linkError && <p className="rv-error-text">{linkError}</p>}
+            </div>
+            <button className="rv-button is-primary" type="submit" disabled={linking}>
+              {t("settings.robloxAccount.link")}
+            </button>
+          </form>
+        )}
       </section>
 
       <section className="rv-settings-section">

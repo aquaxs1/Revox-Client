@@ -65,14 +65,39 @@ pub fn detect_roblox(system: &impl RobloxSystem) -> RobloxStatus {
     }
 }
 
-pub fn launch_official(system: &impl RobloxSystem, place_id: &str) -> Result<String, AppError> {
+/// Builds the official protocol URL for a place, optionally targeting one
+/// specific server instance.
+///
+/// Both parts are validated before they reach the URL, so nothing a user typed
+/// or a Roblox response contained can add further parameters to it.
+pub fn build_launch_uri(
+    place_id: &str,
+    game_instance_id: Option<&str>,
+) -> Result<String, AppError> {
     if !valid_place_id(place_id) {
         return Err(AppError::new(
             "INVALID_PLACE_ID",
             "Place ID must contain 1 to 20 ASCII digits",
         ));
     }
-    let uri = format!("roblox://placeId={place_id}");
+    match game_instance_id {
+        None => Ok(format!("roblox://placeId={place_id}")),
+        Some(instance) if valid_instance_id(instance) => Ok(format!(
+            "roblox://placeId={place_id}&gameInstanceId={instance}"
+        )),
+        Some(_) => Err(AppError::new(
+            "INVALID_INSTANCE_ID",
+            "A server instance ID must be a UUID",
+        )),
+    }
+}
+
+pub fn launch_official(
+    system: &impl RobloxSystem,
+    place_id: &str,
+    game_instance_id: Option<&str>,
+) -> Result<String, AppError> {
+    let uri = build_launch_uri(place_id, game_instance_id)?;
     system.open_uri(&uri)?;
     Ok(uri)
 }
@@ -81,6 +106,19 @@ pub fn valid_place_id(place_id: &str) -> bool {
     !place_id.is_empty()
         && place_id.len() <= 20
         && place_id.bytes().all(|byte| byte.is_ascii_digit())
+}
+
+/// Roblox server instance IDs are UUIDs in the canonical 8-4-4-4-12 form.
+pub fn valid_instance_id(value: &str) -> bool {
+    let groups: Vec<&str> = value.split('-').collect();
+    groups.len() == 5
+        && [8usize, 4, 4, 4, 12]
+            .iter()
+            .zip(&groups)
+            .all(|(expected, group)| {
+                group.len() == *expected
+                    && group.bytes().all(|byte| byte.is_ascii_hexdigit())
+            })
 }
 
 /// Process names that count as "Roblox is playing right now".

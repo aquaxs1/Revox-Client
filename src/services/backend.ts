@@ -5,12 +5,21 @@ import type {
   Activity,
   AppBootstrap,
   AppSettings,
+  CatalogItem,
+  FriendEntry,
   Game,
   GameMetadata,
+  GameServer,
+  GameStats,
+  GameSummary,
   LaunchReceipt,
   RobloxStatus,
+  RobloxUser,
   Session,
   SystemSnapshot,
+  UserPresence,
+  UserStats,
+  WatchlistEntry,
 } from "../contracts/entities";
 
 export type InvokeFunction = (
@@ -84,10 +93,36 @@ export function createTauriBackend(invoke: InvokeFunction): BackendPort {
       }),
     recordActivity: (input) => call<Activity>(invoke, "record_activity", { input }),
     listSessions: () => call<Session[]>(invoke, "list_sessions"),
+    addToWatchlist: (input) =>
+      call<WatchlistEntry>(invoke, "add_to_watchlist", { input }),
+    removeFromWatchlist: (id) => call<void>(invoke, "remove_from_watchlist", { id }),
+    listWatchlist: () => call<WatchlistEntry[]>(invoke, "list_watchlist"),
+
     fetchGameMetadata: (placeId) =>
       call<GameMetadata>(invoke, "fetch_game_metadata", { placeId }),
     syncGameMetadata: (gameId, placeId) =>
       call<Game>(invoke, "sync_game_metadata", { gameId, placeId }),
+    searchUsers: (keyword) =>
+      call<RobloxUser[]>(invoke, "search_roblox_users", { keyword }),
+    getUserStats: (userId) => call<UserStats>(invoke, "get_user_stats", { userId }),
+    getUserByUsername: (username) =>
+      call<RobloxUser>(invoke, "get_user_by_username", { username }),
+    getFriends: (userId) => call<FriendEntry[]>(invoke, "get_friends", { userId }),
+    getPresence: (userIds) =>
+      call<UserPresence[]>(invoke, "get_presence", { userIds }),
+    searchGames: (keyword) =>
+      call<GameSummary[]>(invoke, "search_roblox_games", { keyword }),
+    getGameStats: (universeId) =>
+      call<GameStats>(invoke, "get_game_stats", { universeId }),
+    getGameStatsForPlace: (placeId) =>
+      call<GameStats>(invoke, "get_game_stats_for_place", { placeId }),
+    getGameServers: (placeId) =>
+      call<GameServer[]>(invoke, "get_game_servers", { placeId }),
+    searchCatalog: (keyword) =>
+      call<CatalogItem[]>(invoke, "search_catalog", { keyword }),
+    getCatalogItem: (assetId) =>
+      call<CatalogItem>(invoke, "get_catalog_item", { assetId }),
+
     launchRoblox: (input) => call<LaunchReceipt>(invoke, "launch_roblox", { input }),
   };
 }

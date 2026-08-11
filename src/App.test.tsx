@@ -180,3 +180,71 @@ describe("local profiles", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("opt-in playtime tracking", () => {
+  it("is off on a fresh install and the dashboard says so", async () => {
+    await completeOnboarding();
+
+    expect((await backend.getBootstrap()).settings.statsTrackingEnabled).toBe(false);
+    expect(
+      screen.getByText(
+        "Spielzeit-Erfassung ist aus. Aktiviere sie in den Einstellungen.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("can be turned on from Settings and then stops warning", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Erfassung einschalten" }));
+
+    const group = screen.getByRole("group", { name: "Spielzeit erfassen" });
+    await userEvent.click(within(group).getByRole("button", { name: "An" }));
+
+    expect((await backend.getBootstrap()).settings.statsTrackingEnabled).toBe(true);
+
+    await userEvent.click(screen.getByRole("button", { name: "Spielen" }));
+    expect(
+      screen.queryByText(
+        "Spielzeit-Erfassung ist aus. Aktiviere sie in den Einstellungen.",
+      ),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("the explorer", () => {
+  it("offers profile, game and item search", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Explorer" }));
+
+    expect(screen.getByRole("button", { name: "Profile" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Spiele" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "UGC & Katalog" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Benutzername suchen")).toBeInTheDocument();
+  });
+
+  it("reports that Roblox lookups need the desktop app", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Explorer" }));
+
+    await userEvent.type(screen.getByLabelText("Benutzername suchen"), "builderman");
+    await userEvent.click(screen.getByRole("button", { name: "Suchen" }));
+
+    expect(
+      await screen.findByText("Roblox ist gerade nicht erreichbar."),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("the friends screen", () => {
+  it("asks for a linked Roblox profile before it can show anything", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Freunde" }));
+
+    expect(screen.getByText("Kein Roblox-Profil verknüpft")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Jetzt verknüpfen" }));
+    expect(
+      screen.getByRole("heading", { name: "Einstellungen", level: 1 }),
+    ).toBeInTheDocument();
+  });
+});

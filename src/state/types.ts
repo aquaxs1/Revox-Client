@@ -7,6 +7,7 @@ import type {
   RobloxStatus,
   Session,
   SystemSnapshot,
+  WatchlistEntry,
 } from "../contracts/entities";
 
 export type LoadStatus = "loading" | "ready" | "error";
@@ -20,6 +21,7 @@ export interface AppState {
   accountGames: AccountGame[];
   sessions: Session[];
   activities: Activity[];
+  watchlist: WatchlistEntry[];
   robloxStatus: RobloxStatus | null;
   system: SystemSnapshot | null;
 }

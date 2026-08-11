@@ -18,6 +18,8 @@ import type {
   RobloxStatus,
   SettingsInput,
   SystemSnapshot,
+  WatchKind,
+  WatchlistInput,
 } from "../contracts/entities";
 import { parsePlaceId } from "../domain/roblox";
 import { BackendError, toBackendError } from "../services/backend";
@@ -33,6 +35,7 @@ const INITIAL_STATE: AppState = {
   accountGames: [],
   sessions: [],
   activities: [],
+  watchlist: [],
   robloxStatus: null,
   system: null,
 };
@@ -57,6 +60,7 @@ function reducer(state: AppState, action: Action): AppState {
         accountGames: action.bootstrap.accountGames,
         sessions: action.bootstrap.sessions,
         activities: action.bootstrap.activities,
+        watchlist: action.bootstrap.watchlist,
       };
     case "failed":
       return { ...state, status: "error", errorCode: action.code };
@@ -77,6 +81,13 @@ export interface AddGameResult {
 
 interface AppStoreValue {
   state: AppState;
+  /**
+   * The raw port, for the read-only Roblox views.
+   *
+   * Explorer and Friends render live lookups that are never stored, so routing
+   * them through the reducer would only add churn.
+   */
+  backend: BackendPort;
   reload: () => Promise<void>;
   saveSettings: (patch: SettingsInput) => Promise<void>;
   addGame: (reference: string) => Promise<AddGameResult>;
@@ -88,7 +99,16 @@ interface AppStoreValue {
   saveAccount: (input: AccountInput) => Promise<void>;
   deleteAccount: (id: string, keepStats: boolean) => Promise<void>;
   selectAccount: (id: string) => Promise<void>;
-  launch: (game: Game) => Promise<LaunchReceipt>;
+  launch: (game: Game, gameInstanceId?: string | null) => Promise<LaunchReceipt>;
+  launchPlace: (
+    placeId: string,
+    gameInstanceId?: string | null,
+  ) => Promise<LaunchReceipt>;
+  addWatch: (input: WatchlistInput) => Promise<void>;
+  linkRobloxAccount: (username: string) => Promise<void>;
+  unlinkRobloxAccount: () => Promise<void>;
+  removeWatch: (id: string) => Promise<void>;
+  isWatched: (kind: WatchKind, targetId: string) => boolean;
   refreshRobloxStatus: () => Promise<void>;
   refreshSystem: () => Promise<void>;
 }
@@ -260,11 +280,12 @@ export function AppStoreProvider({
   );
 
   const launch = useCallback(
-    async (game: Game) => {
+    async (game: Game, gameInstanceId: string | null = null) => {
       const receipt = await backend.launchRoblox({
         placeId: game.placeId,
         gameId: game.id,
         accountProfileId: latest.current.settings.selectedAccountId,
+        gameInstanceId,
       });
       await reload();
       return receipt;
@@ -272,9 +293,67 @@ export function AppStoreProvider({
     [backend, reload],
   );
 
+  /**
+   * Launches a place that is not in the library — joining a friend, a server
+   * from the stats viewer, or an old session whose game was removed.
+   */
+  const launchPlace = useCallback(
+    async (placeId: string, gameInstanceId: string | null = null) => {
+      const known = latest.current.games.find((game) => game.placeId === placeId);
+      const receipt = await backend.launchRoblox({
+        placeId,
+        gameId: known?.id ?? null,
+        accountProfileId: latest.current.settings.selectedAccountId,
+        gameInstanceId,
+      });
+      await reload();
+      return receipt;
+    },
+    [backend, reload],
+  );
+
+  const addWatch = useCallback(
+    async (input: WatchlistInput) => {
+      await backend.addToWatchlist(input);
+      await reload();
+    },
+    [backend, reload],
+  );
+
+  const removeWatch = useCallback(
+    async (id: string) => {
+      await backend.removeFromWatchlist(id);
+      await reload();
+    },
+    [backend, reload],
+  );
+
+  /** Resolves a username to its public profile and stores the ID. */
+  const linkRobloxAccount = useCallback(
+    async (username: string) => {
+      const user = await backend.getUserByUsername(username);
+      await saveSettings({ robloxUserId: user.id, robloxUsername: user.name });
+    },
+    [backend, saveSettings],
+  );
+
+  const unlinkRobloxAccount = useCallback(
+    async () => saveSettings({ robloxUserId: null, robloxUsername: null }),
+    [saveSettings],
+  );
+
+  const isWatched = useCallback(
+    (kind: WatchKind, targetId: string) =>
+      latest.current.watchlist.some(
+        (entry) => entry.kind === kind && entry.targetId === targetId,
+      ),
+    [],
+  );
+
   const value = useMemo<AppStoreValue>(
     () => ({
       state,
+      backend,
       reload,
       saveSettings,
       addGame,
@@ -287,14 +366,27 @@ export function AppStoreProvider({
       deleteAccount,
       selectAccount,
       launch,
+      launchPlace,
+      addWatch,
+      removeWatch,
+      isWatched,
+      linkRobloxAccount,
+      unlinkRobloxAccount,
       refreshRobloxStatus,
       refreshSystem,
     }),
     [
       addGame,
+      addWatch,
+      backend,
       deleteAccount,
       isFavorite,
+      isWatched,
       launch,
+      launchPlace,
+      linkRobloxAccount,
+      removeWatch,
+      unlinkRobloxAccount,
       playtimeSeconds,
       refreshGame,
       refreshRobloxStatus,

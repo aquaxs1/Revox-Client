@@ -2,7 +2,7 @@ use revox_client_lib::{
     contracts::{GameMetadata, SettingsInput},
     db::repository::{
         initials_for, normalize_tags, AccountInput, ActivityInput, FinishedSession, GameInput,
-        Repository, SqliteRepository,
+        Repository, SqliteRepository, WatchlistInput,
     },
 };
 
@@ -229,6 +229,7 @@ fn a_finished_session_updates_playtime_and_last_launch() {
             duration_seconds: 2520,
             possible_crash: false,
             source: "revox".to_string(),
+            game_instance_id: None,
         })
         .unwrap();
     let bootstrap = repository.bootstrap().unwrap();
@@ -252,6 +253,7 @@ fn sessions_reject_negative_durations_and_unknown_sources() {
         duration_seconds: 600,
         possible_crash: false,
         source: "revox".to_string(),
+        game_instance_id: None,
     };
 
     assert!(repository
@@ -316,6 +318,7 @@ fn deleting_an_account_can_preserve_or_remove_session_statistics() {
                 duration_seconds: 600,
                 possible_crash: false,
                 source: "revox".to_string(),
+                game_instance_id: None,
             })
             .unwrap();
 
@@ -372,4 +375,78 @@ fn initials_fall_back_to_the_label_when_the_username_is_blank() {
     assert_eq!(initials_for("", "Zweitkonto"), "ZW");
     assert_eq!(initials_for("Sebi Zupanc", ""), "SZ");
     assert_eq!(initials_for("x", ""), "X");
+}
+
+#[test]
+fn the_watchlist_deduplicates_and_refreshes_the_label() {
+    let repository = repository();
+
+    let first = repository
+        .add_to_watchlist(WatchlistInput {
+            kind: "user".to_string(),
+            target_id: "261".to_string(),
+            label: "Shedletsky".to_string(),
+            image_url: None,
+        })
+        .unwrap();
+    let again = repository
+        .add_to_watchlist(WatchlistInput {
+            kind: "user".to_string(),
+            target_id: "261".to_string(),
+            label: "New label".to_string(),
+            image_url: Some("https://tr.rbxcdn.com/x".to_string()),
+        })
+        .unwrap();
+
+    assert_eq!(again.id, first.id);
+    assert_eq!(again.label, "New label");
+    assert_eq!(repository.list_watchlist().unwrap().len(), 1);
+
+    repository.remove_from_watchlist(&first.id).unwrap();
+    assert!(repository.list_watchlist().unwrap().is_empty());
+    assert!(repository.remove_from_watchlist(&first.id).is_err());
+}
+
+#[test]
+fn the_watchlist_rejects_bad_kinds_and_ids_before_touching_sql() {
+    let repository = repository();
+
+    assert!(repository
+        .add_to_watchlist(WatchlistInput {
+            kind: "clan".to_string(),
+            target_id: "261".to_string(),
+            label: "x".to_string(),
+            image_url: None,
+        })
+        .is_err());
+    assert!(repository
+        .add_to_watchlist(WatchlistInput {
+            kind: "user".to_string(),
+            target_id: "261 OR 1=1".to_string(),
+            label: "x".to_string(),
+            image_url: None,
+        })
+        .is_err());
+}
+
+#[test]
+fn a_linked_roblox_id_must_be_numeric() {
+    let repository = repository();
+
+    assert!(repository
+        .save_settings(SettingsInput {
+            roblox_user_id: Some(Some("261".to_string())),
+            ..Default::default()
+        })
+        .is_ok());
+    assert!(repository
+        .save_settings(SettingsInput {
+            roblox_user_id: Some(Some("not-an-id".to_string())),
+            ..Default::default()
+        })
+        .is_err());
+    assert_eq!(
+        repository.settings().unwrap().roblox_user_id.as_deref(),
+        Some("261")
+    );
 }
