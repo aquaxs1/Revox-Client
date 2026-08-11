@@ -7,6 +7,7 @@ import type {
   AppBootstrap,
   AppSettings,
   CatalogItem,
+  DiscordStatus,
   FriendEntry,
   Game,
   GameInput,
@@ -63,8 +64,11 @@ export interface BackendPort {
   setAutostart(enabled: boolean): Promise<void>;
   /** Resolves to the new version, or `null` when already up to date. */
   checkForUpdate(): Promise<string | null>;
+  discordStatus(): Promise<DiscordStatus>;
   discordConnect(): Promise<void>;
   discordClear(): Promise<void>;
+  /** The Roblox account signed in on this machine, as a suggestion. */
+  detectRobloxAccount(): Promise<RobloxUser | null>;
 
   // Public Roblox data
   fetchGameMetadata(placeId: string): Promise<GameMetadata>;

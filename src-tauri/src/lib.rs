@@ -335,6 +335,23 @@ async fn check_for_update(app: tauri::AppHandle) -> Result<Option<String>, AppEr
     Ok(update.map(|update| update.version))
 }
 
+/// What Rich Presence can do on this build, so the UI knows whether to ask for
+/// an application ID at all.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DiscordStatus {
+    built_in_available: bool,
+    connected: bool,
+}
+
+#[tauri::command]
+fn discord_status(state: tauri::State<'_, AppState>) -> DiscordStatus {
+    DiscordStatus {
+        built_in_available: discord::has_built_in(),
+        connected: state.discord.is_connected(),
+    }
+}
+
 #[tauri::command]
 fn discord_connect(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
     let settings = state
@@ -346,10 +363,29 @@ fn discord_connect(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
             "Discord Rich Presence is switched off",
         ));
     }
-    let application_id = settings.discord_application_id.ok_or_else(|| {
-        AppError::new("DISCORD_NOT_CONFIGURED", "No Discord application ID set")
-    })?;
+    let application_id =
+        discord::resolve_application_id(settings.discord_application_id.as_deref())
+            .ok_or_else(|| {
+                AppError::new(
+                    "DISCORD_NOT_CONFIGURED",
+                    "This build has no Discord application configured",
+                )
+            })?;
     state.discord.connect(&application_id)
+}
+
+/// Suggests the Roblox account signed in on this machine.
+///
+/// Read from Roblox's own local logs, never from a cookie. The caller is
+/// expected to show this as a suggestion the user confirms.
+#[tauri::command]
+async fn detect_roblox_account() -> Result<Option<RobloxUser>, AppError> {
+    let Some(user_id) = roblox::account::detect_user_id() else {
+        return Ok(None);
+    };
+    // A log can name an account that no longer resolves; that is a miss, not an
+    // error the user needs to see.
+    Ok(api::users::profile(&user_id).await.ok())
 }
 
 #[tauri::command]
@@ -431,10 +467,12 @@ fn publish_discord(state: &AppState, game_id: Option<&str>) {
     let Some(settings) = state.settings() else {
         return;
     };
-    let Some(application_id) = settings.discord_application_id.as_deref() else {
+    let Some(application_id) =
+        discord::resolve_application_id(settings.discord_application_id.as_deref())
+    else {
         return;
     };
-    if state.discord.connect(application_id).is_err() {
+    if state.discord.connect(&application_id).is_err() {
         return;
     }
 
@@ -769,8 +807,10 @@ pub fn run() {
             get_catalog_item,
             set_autostart,
             check_for_update,
+            discord_status,
             discord_connect,
             discord_clear,
+            detect_roblox_account,
             launch_roblox
         ])
         .run(tauri::generate_context!())

@@ -9,9 +9,16 @@ import { useAppStore } from "../state/AppStore";
  * Closes on outside click and on Escape so it never traps keyboard users.
  */
 export function AccountMenu({
+  anchor,
   onClose,
   onManage,
 }: {
+  /**
+   * The button that opened the menu. Clicks on it are ignored here so its own
+   * toggle handler can close the menu, instead of this closing it first and
+   * the toggle immediately reopening it.
+   */
+  anchor: React.RefObject<HTMLElement | null>;
   onClose: () => void;
   onManage: () => void;
 }) {
@@ -21,9 +28,11 @@ export function AccountMenu({
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
-      if (!container.current?.contains(event.target as Node)) {
-        onClose();
+      const target = event.target as Node;
+      if (container.current?.contains(target) || anchor.current?.contains(target)) {
+        return;
       }
+      onClose();
     }
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -35,7 +44,7 @@ export function AccountMenu({
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [onClose]);
+  }, [anchor, onClose]);
 
   return (
     <div className="rv-account-menu" ref={container} role="menu">

@@ -326,3 +326,9 @@ export type ExportFormat = "csv" | "json";
 export type FriendEvent =
   | { cameOnline: { userId: string; name: string } }
   | { startedPlaying: { userId: string; name: string; game: string } };
+
+export interface DiscordStatus {
+  /** True when this build ships a Revox Discord application. */
+  builtInAvailable: boolean;
+  connected: boolean;
+}

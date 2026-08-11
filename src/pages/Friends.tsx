@@ -102,7 +102,7 @@ export function FriendsPage({ onOpenSettings }: { onOpenSettings: () => void }) 
           {friends.map((entry) => {
             const joinable = isJoinable(entry.presence);
             const placeId = presencePlaceId(entry.presence);
-            const state = entry.presence?.state ?? "unknown";
+            const presenceState = entry.presence?.state ?? "unknown";
 
             return (
               <article className="rv-friend" key={entry.user.id}>
@@ -120,11 +120,11 @@ export function FriendsPage({ onOpenSettings }: { onOpenSettings: () => void }) 
                     )}
                   </strong>
                   <small>@{entry.user.name}</small>
-                  <span className="rv-status" data-state={state}>
+                  <span className="rv-status" data-state={presenceState}>
                     <i />
-                    {entry.presence?.lastLocation && state === "inGame"
+                    {entry.presence?.lastLocation && presenceState === "inGame"
                       ? t("friends.playing", { game: entry.presence.lastLocation })
-                      : t(`presence.${state}` as const)}
+                      : t(`presence.${presenceState}` as const)}
                   </span>
                 </div>
 

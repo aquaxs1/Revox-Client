@@ -11,13 +11,18 @@ beforeEach(() => {
   backend = createMemoryBackend(null);
 });
 
-/** Walks through the two onboarding steps and lands on the dashboard. */
+/** Walks the setup wizard end to end and lands on the dashboard. */
 async function completeOnboarding() {
   render(<App backend={backend} />);
   await userEvent.click(
     await screen.findByRole("button", { name: "Einrichtung starten" }),
   );
-  await userEvent.click(screen.getByRole("button", { name: /Los geht/ }));
+  // Language and theme, then the defaults.
+  await userEvent.click(screen.getByRole("button", { name: /Weiter/ }));
+  await userEvent.click(screen.getByRole("button", { name: /Weiter/ }));
+  // Linking a Roblox profile is optional.
+  await userEvent.click(screen.getByRole("button", { name: /Überspringen/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Revox öffnen" }));
   await screen.findByRole("heading", { name: "Dashboard", level: 1 });
 }
 
@@ -39,7 +44,7 @@ describe("onboarding", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Englisch" }));
 
-    expect(screen.getByRole("button", { name: "Let's go" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Next/ })).toBeInTheDocument();
   });
 
   it("does not come back after it has been completed", async () => {
@@ -78,15 +83,15 @@ describe("adding a game", () => {
     await userEvent.click(screen.getAllByRole("button", { name: /Spiel hinzufügen/ })[0]);
 
     await userEvent.type(
-      screen.getByLabelText("Place-ID oder Roblox-Link"),
+      screen.getByLabelText("Spielname, Place-ID oder Roblox-Link"),
       "not-a-place",
     );
-    await userEvent.click(screen.getByRole("button", { name: "Hinzufügen" }));
+    await userEvent.click(screen.getByRole("button", { name: "Suchen" }));
 
+    // Anything that is not an ID or a link is treated as a name and searched,
+    // which the preview cannot do.
     expect(
-      await screen.findByText(
-        "Gib eine numerische Place-ID oder einen offiziellen Roblox-Spiel-Link ein.",
-      ),
+      await screen.findByText("Roblox ist gerade nicht erreichbar."),
     ).toBeInTheDocument();
   });
 
@@ -95,7 +100,7 @@ describe("adding a game", () => {
     await userEvent.click(screen.getAllByRole("button", { name: /Spiel hinzufügen/ })[0]);
 
     await userEvent.type(
-      screen.getByLabelText("Place-ID oder Roblox-Link"),
+      screen.getByLabelText("Spielname, Place-ID oder Roblox-Link"),
       "https://www.roblox.com/games/920587237/Doors",
     );
     await userEvent.click(screen.getByRole("button", { name: "Hinzufügen" }));
@@ -269,20 +274,22 @@ describe("the companion settings", () => {
     expect(screen.getByText("Verknüpfe zuerst ein Roblox-Profil.")).toBeInTheDocument();
   });
 
-  it("keep Discord locked until an application ID is stored", async () => {
+  it("offer Discord as a single switch, with no ID to fill in", async () => {
     await completeOnboarding();
     await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
 
     const group = screen.getByRole("group", { name: "Rich Presence aktiv" });
-    expect(within(group).getByRole("button", { name: "An" })).toBeDisabled();
+    expect(within(group).getByRole("button", { name: "An" })).toBeEnabled();
+    // The application ID is an advanced escape hatch, not a required step.
+    expect(screen.getByText("Eigene Application-ID verwenden")).toBeInTheDocument();
   });
 
-  it("refuse a Discord application ID that is not a snowflake", async () => {
+  it("refuse an advanced Discord application ID that is not a snowflake", async () => {
     await completeOnboarding();
     await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
 
-    const field = screen.getByLabelText("Discord Application-ID");
-    await userEvent.type(field, "12345");
+    await userEvent.click(screen.getByText("Eigene Application-ID verwenden"));
+    await userEvent.type(screen.getByLabelText("Discord Application-ID"), "12345");
     await userEvent.tab();
 
     expect(
@@ -292,10 +299,11 @@ describe("the companion settings", () => {
     ).toBeInTheDocument();
   });
 
-  it("store a valid Discord application ID and unlock the switch", async () => {
+  it("store a valid advanced Discord application ID", async () => {
     await completeOnboarding();
     await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
 
+    await userEvent.click(screen.getByText("Eigene Application-ID verwenden"));
     await userEvent.type(
       screen.getByLabelText("Discord Application-ID"),
       "123456789012345678",
@@ -304,8 +312,6 @@ describe("the companion settings", () => {
 
     const stored = (await backend.getBootstrap()).settings;
     expect(stored.discordApplicationId).toBe("123456789012345678");
-    const group = await screen.findByRole("group", { name: "Rich Presence aktiv" });
-    expect(within(group).getByRole("button", { name: "An" })).toBeEnabled();
   });
 
   it("report that the update source is unavailable in the preview", async () => {
@@ -314,8 +320,11 @@ describe("the companion settings", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Nach Updates suchen" }));
 
+    // A desktop-only action must not blame Roblox for being unreachable.
     expect(
-      await screen.findByText("Roblox ist gerade nicht erreichbar."),
+      await screen.findByText(
+        "Das geht nur in der Desktop-App, nicht in der Browser-Vorschau.",
+      ),
     ).toBeInTheDocument();
   });
 });
@@ -327,5 +336,86 @@ describe("exporting statistics", () => {
 
     expect(screen.getByRole("button", { name: "Als CSV" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Als JSON" })).toBeDisabled();
+  });
+});
+
+describe("the setup wizard", () => {
+  it("writes each choice as it is made, so quitting halfway still configures the app", async () => {
+    render(<App backend={backend} />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Einrichtung starten" }),
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Hell" }));
+    expect((await backend.getBootstrap()).settings.theme).toBe("light");
+
+    await userEvent.click(screen.getByRole("button", { name: /Weiter/ }));
+    const tracking = screen.getByRole("group", { name: "Spielzeit erfassen" });
+    await userEvent.click(within(tracking).getByRole("button", { name: "An" }));
+
+    const stored = (await backend.getBootstrap()).settings;
+    expect(stored.statsTrackingEnabled).toBe(true);
+    // Not finished yet, so the wizard still owns the screen.
+    expect(stored.onboardingComplete).toBe(false);
+  });
+
+  it("lets the Roblox link be skipped entirely", async () => {
+    await completeOnboarding();
+
+    const settings = (await backend.getBootstrap()).settings;
+    expect(settings.onboardingComplete).toBe(true);
+    expect(settings.robloxUserId).toBeNull();
+  });
+
+  it("can walk backwards without losing a choice", async () => {
+    render(<App backend={backend} />);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Einrichtung starten" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Englisch" }));
+    await userEvent.click(screen.getByRole("button", { name: /Next/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Back/ }));
+
+    expect((await backend.getBootstrap()).settings.locale).toBe("en");
+    expect(screen.getByRole("button", { name: "English" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+});
+
+describe("linking a Roblox profile", () => {
+  it("offers the detected account for one-click confirmation", async () => {
+    const detecting = {
+      ...createMemoryBackend(null),
+      detectRobloxAccount: async () => ({
+        id: "261",
+        name: "Shedletsky",
+        displayName: "Shedletsky",
+        description: "",
+        created: null,
+        accountAgeDays: null,
+        hasVerifiedBadge: true,
+        isBanned: false,
+        avatarUrl: null,
+      }),
+    } as BackendPort;
+    await detecting.saveSettings({ onboardingComplete: true });
+    render(<App backend={detecting} />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Einstellungen" }));
+    await userEvent.click(await screen.findByRole("button", { name: /Das bin ich/ }));
+
+    const settings = (await detecting.getBootstrap()).settings;
+    expect(settings.robloxUserId).toBe("261");
+    expect(settings.robloxUsername).toBe("Shedletsky");
+  });
+
+  it("falls back to a search picker when nothing is detected", async () => {
+    await completeOnboarding();
+    await userEvent.click(screen.getByRole("button", { name: "Einstellungen" }));
+
+    expect(screen.queryByText(/Das bin ich/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Profil suchen")).toBeInTheDocument();
   });
 });

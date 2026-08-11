@@ -1,25 +1,30 @@
-import { ArrowRight, Check } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, ArrowRight, Check, PartyPopper } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import type { ThemeMode } from "../contracts/entities";
 import { useI18n } from "../i18n";
-import type { Locale } from "../i18n/types";
+import type { Locale, TranslationKey } from "../i18n/types";
+import { isTauri } from "../services/backend";
 import { useAppStore } from "../state/AppStore";
 import { Logo } from "./Logo";
+import { RobloxAccountLink } from "./RobloxAccountLink";
 
-const TOTAL_STEPS = 2;
+const STEPS = 5;
 
 /**
- * First-run setup. Two steps, matching the onboarding screens in the design:
- * a welcome, then language and theme.
+ * First-run setup, styled as the client itself rather than as an installer
+ * page — it *is* the client, so the two never drift apart.
  *
- * Both choices are written immediately so the rest of the app already renders
- * in the chosen language and theme by the time the user reaches the dashboard.
+ * Every choice is written the moment it is made, so quitting halfway still
+ * leaves a configured app, and nothing here is a dead end: each toggle also
+ * lives in Settings.
  */
 export function Onboarding() {
   const { t, locale, setLocale } = useI18n();
-  const { state, saveSettings } = useAppStore();
+  const { state, saveSettings, setAutostart } = useAppStore();
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
+
+  const { settings } = state;
 
   async function chooseLocale(next: Locale) {
     setLocale(next);
@@ -38,12 +43,12 @@ export function Onboarding() {
   return (
     <div className="rv-onboarding">
       <div className="rv-onboarding-card">
-        <Logo size={92} variant="full" title={t("app.name")} />
+        <Logo size={step === 1 || step === STEPS ? 92 : 56} variant="full" title={t("app.name")} />
         <p className="rv-onboarding-step">
-          {t("onboarding.step", { current: step, total: TOTAL_STEPS })}
+          {t("onboarding.step", { current: step, total: STEPS })}
         </p>
 
-        {step === 1 ? (
+        {step === 1 && (
           <>
             <h1>{t("onboarding.welcome.title")}</h1>
             <p>{t("onboarding.welcome.body")}</p>
@@ -52,14 +57,15 @@ export function Onboarding() {
               <ArrowRight size={16} />
             </button>
           </>
-        ) : (
+        )}
+
+        {step === 2 && (
           <>
             <h1>{t("onboarding.setup.title")}</h1>
             <p>{t("onboarding.setup.body")}</p>
 
             <div className="rv-onboarding-choices">
-              <div className="rv-onboarding-choice">
-                <strong>{t("onboarding.setup.language")}</strong>
+              <Choice label={t("onboarding.setup.language")}>
                 <div className="rv-segmented" role="group">
                   <button
                     aria-pressed={locale === "de"}
@@ -74,26 +80,104 @@ export function Onboarding() {
                     {t("settings.language.english")}
                   </button>
                 </div>
-              </div>
+              </Choice>
 
-              <div className="rv-onboarding-choice">
-                <strong>{t("onboarding.setup.theme")}</strong>
+              <Choice label={t("onboarding.setup.theme")}>
                 <div className="rv-segmented" role="group">
                   {(["dark", "light", "system"] as ThemeMode[]).map((theme) => (
                     <button
                       key={theme}
-                      aria-pressed={state.settings.theme === theme}
+                      aria-pressed={settings.theme === theme}
                       onClick={() => void saveSettings({ theme })}
                     >
                       {t(`settings.theme.${theme}` as const)}
                     </button>
                   ))}
                 </div>
-              </div>
+              </Choice>
             </div>
 
+            <Navigation onBack={() => setStep(1)} onNext={() => setStep(3)} />
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <h1>{t("setup.defaults.title")}</h1>
+            <p>{t("setup.defaults.body")}</p>
+
+            <div className="rv-onboarding-choices">
+              <Toggle
+                label="setup.tracking"
+                hint="setup.trackingHint"
+                value={settings.statsTrackingEnabled}
+                onChange={(value) => void saveSettings({ statsTrackingEnabled: value })}
+              />
+              <Toggle
+                label="setup.tray"
+                hint="setup.trayHint"
+                value={settings.minimizeToTray}
+                onChange={(value) => void saveSettings({ minimizeToTray: value })}
+              />
+              {isTauri() && (
+                <Toggle
+                  label="setup.autostart"
+                  hint="setup.autostartHint"
+                  value={settings.autostartEnabled}
+                  onChange={(value) => {
+                    // Autostart can be refused by the OS; the setting only
+                    // moves if the registration actually succeeded.
+                    void setAutostart(value).catch(() => {});
+                  }}
+                />
+              )}
+            </div>
+
+            <Navigation onBack={() => setStep(2)} onNext={() => setStep(4)} />
+          </>
+        )}
+
+        {step === 4 && (
+          <>
+            <h1>{t("setup.account.title")}</h1>
+            <p>{t("setup.account.body")}</p>
+
+            <div className="rv-onboarding-panel">
+              <RobloxAccountLink compact />
+            </div>
+
+            {settings.robloxUserId && (
+              <div className="rv-onboarding-choices">
+                <Toggle
+                  label="setup.notify"
+                  hint="setup.notifyHint"
+                  value={settings.notifyFriends}
+                  onChange={(value) => void saveSettings({ notifyFriends: value })}
+                />
+              </div>
+            )}
+
             <div className="rv-exit-actions">
-              <button className="rv-button is-ghost" onClick={() => setStep(1)}>
+              <button className="rv-button is-ghost" onClick={() => setStep(3)}>
+                <ArrowLeft size={16} />
+                {t("common.back")}
+              </button>
+              <button className="rv-button is-primary" onClick={() => setStep(5)}>
+                {settings.robloxUserId ? t("common.next") : t("setup.account.skip")}
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 5 && (
+          <>
+            <PartyPopper size={28} aria-hidden />
+            <h1>{t("setup.done.title")}</h1>
+            <p>{t("setup.done.body")}</p>
+            <div className="rv-exit-actions">
+              <button className="rv-button is-ghost" onClick={() => setStep(4)}>
+                <ArrowLeft size={16} />
                 {t("common.back")}
               </button>
               <button
@@ -102,12 +186,68 @@ export function Onboarding() {
                 disabled={busy}
               >
                 <Check size={16} />
-                {t("onboarding.setup.finish")}
+                {t("setup.done.start")}
               </button>
             </div>
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function Choice({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="rv-onboarding-choice">
+      <strong>{label}</strong>
+      {children}
+    </div>
+  );
+}
+
+function Toggle({
+  label,
+  hint,
+  value,
+  onChange,
+}: {
+  label: TranslationKey;
+  hint: TranslationKey;
+  value: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <div className="rv-onboarding-choice">
+      <span className="rv-onboarding-choice-body">
+        <strong>{t(label)}</strong>
+        <small>{t(hint)}</small>
+      </span>
+      <div className="rv-segmented" role="group" aria-label={t(label)}>
+        <button aria-pressed={value} onClick={() => onChange(true)}>
+          {t("settings.tracking.on")}
+        </button>
+        <button aria-pressed={!value} onClick={() => onChange(false)}>
+          {t("settings.tracking.off")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Navigation({ onBack, onNext }: { onBack: () => void; onNext: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="rv-exit-actions">
+      <button className="rv-button is-ghost" onClick={onBack}>
+        <ArrowLeft size={16} />
+        {t("common.back")}
+      </button>
+      <button className="rv-button is-primary" onClick={onNext}>
+        {t("common.next")}
+        <ArrowRight size={16} />
+      </button>
     </div>
   );
 }

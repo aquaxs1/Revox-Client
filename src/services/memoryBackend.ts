@@ -150,11 +150,23 @@ export function createMemoryBackend(
     };
   }
 
-  /** Every Roblox lookup is blocked by CORS in a browser. */
+  /** Roblox lookups are blocked by CORS in a browser. */
   function offline(): never {
     throw new BackendError(
       "API_UNREACHABLE",
       "Roblox lookups are only available in the desktop app",
+    );
+  }
+
+  /**
+   * Actions that need the operating system — writing files, registering
+   * autostart, talking to Discord. These fail for a different reason than a
+   * Roblox lookup does, so they get their own code and message.
+   */
+  function desktopOnly(): never {
+    throw new BackendError(
+      "DESKTOP_ONLY",
+      "This action is only available in the desktop app",
     );
   }
 
@@ -407,19 +419,27 @@ export function createMemoryBackend(
     // Writing files, registering autostart, reaching Discord and checking for
     // updates are all desktop-only. The preview says so rather than pretending.
     async exportSessions(_format: ExportFormat, _path: string): Promise<string> {
-      return offline();
+      return desktopOnly();
     },
     async setAutostart() {
-      return offline();
+      return desktopOnly();
     },
     async checkForUpdate(): Promise<string | null> {
-      return offline();
+      return desktopOnly();
+    },
+    async discordStatus() {
+      return { builtInAvailable: false, connected: false };
     },
     async discordConnect() {
-      return offline();
+      return desktopOnly();
     },
     async discordClear() {
-      return offline();
+      return desktopOnly();
+    },
+    async detectRobloxAccount() {
+      // Reading Roblox's local logs needs the desktop app; the preview simply
+      // has nothing to detect.
+      return null;
     },
 
     // Roblox blocks browser-origin requests, so the preview cannot reach any of

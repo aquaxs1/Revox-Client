@@ -10,6 +10,31 @@ use discord_rich_presence::{activity, DiscordIpc, DiscordIpcClient};
 
 use crate::error::AppError;
 
+/// Revox's own Discord application, used so nobody has to register one.
+///
+/// A Discord application ID is public by design — it is sent in the clear
+/// during the RPC handshake — so shipping it is exactly how every other
+/// launcher does this. Fill it in once from the Discord Developer Portal and
+/// every install gets Rich Presence from a single toggle.
+///
+/// While it is empty, Rich Presence stays unavailable and the UI says so
+/// instead of failing silently.
+pub const BUILT_IN_APPLICATION_ID: &str = "";
+
+/// The ID to connect with: the user's override if they set one, otherwise the
+/// built-in application.
+pub fn resolve_application_id(user_override: Option<&str>) -> Option<String> {
+    user_override
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .or(Some(BUILT_IN_APPLICATION_ID).filter(|value| !value.is_empty()))
+        .map(str::to_owned)
+}
+
+pub fn has_built_in() -> bool {
+    !BUILT_IN_APPLICATION_ID.is_empty()
+}
+
 /// Discord application IDs are numeric snowflakes.
 pub fn valid_application_id(value: &str) -> bool {
     let trimmed = value.trim();
@@ -160,6 +185,26 @@ mod tests {
         assert!(!valid_application_id("abcdefghijklmnopqr"));
         assert!(!valid_application_id("12345678901234567890123"));
         assert!(!valid_application_id("123456789012345678; rm -rf"));
+    }
+
+    #[test]
+    fn a_user_override_wins_over_the_built_in_application() {
+        assert_eq!(
+            resolve_application_id(Some("123456789012345678")).as_deref(),
+            Some("123456789012345678")
+        );
+        // Whitespace-only is not an override.
+        assert_eq!(
+            resolve_application_id(Some("   ")),
+            resolve_application_id(None)
+        );
+    }
+
+    #[test]
+    fn without_an_override_it_falls_back_to_the_built_in_one() {
+        // Mirrors whatever the constant currently holds, so this stays true
+        // both before and after the ID is filled in.
+        assert_eq!(resolve_application_id(None).is_some(), has_built_in());
     }
 
     #[test]

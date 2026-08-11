@@ -33,8 +33,14 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "languages": ["German", "English"],
-        "displayLanguageSelector": true
+        "languages": [
+          "German",
+          "English"
+        ],
+        "displayLanguageSelector": true,
+        "headerImage": "installer/header.bmp",
+        "sidebarImage": "installer/sidebar.bmp",
+        "installerIcon": "icons/icon.ico"
       }
     },
     "icon": [

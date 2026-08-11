@@ -13,11 +13,12 @@ import {
   ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
-import type { Spacing, ThemeMode } from "../contracts/entities";
+import { useEffect, useState } from "react";
+import type { DiscordStatus, Spacing, ThemeMode } from "../contracts/entities";
 import { useI18n } from "../i18n";
 import type { Locale, TranslationKey } from "../i18n/types";
 import { toBackendError } from "../services/backend";
+import { RobloxAccountLink } from "../components/RobloxAccountLink";
 import { useAppStore } from "../state/AppStore";
 import { APP_VERSION } from "../version";
 
@@ -56,19 +57,15 @@ export function SettingsPage() {
     backend,
     saveSettings,
     refreshSystem,
-    linkRobloxAccount,
-    unlinkRobloxAccount,
     setAutostart,
   } = useAppStore();
   const { settings, system } = state;
   const [robux, setRobux] = useState(String(settings.robuxSpent));
-  const [robloxName, setRobloxName] = useState("");
-  const [linkError, setLinkError] = useState<string | null>(null);
-  const [linking, setLinking] = useState(false);
   const [discordId, setDiscordId] = useState(settings.discordApplicationId ?? "");
   const [notice, setNotice] = useState<{ text: string; tone: "ok" | "error" } | null>(
     null,
   );
+  const [discord, setDiscord] = useState<DiscordStatus | null>(null);
 
   useEffect(() => {
     setRobux(String(settings.robuxSpent));
@@ -82,6 +79,13 @@ export function SettingsPage() {
     void refreshSystem();
   }, [refreshSystem]);
 
+  useEffect(() => {
+    void backend
+      .discordStatus()
+      .then(setDiscord)
+      .catch(() => setDiscord(null));
+  }, [backend]);
+
   async function chooseLocale(next: Locale) {
     setLocale(next);
     await saveSettings({ locale: next });
@@ -94,21 +98,6 @@ export function SettingsPage() {
       return;
     }
     void saveSettings({ robuxSpent: parsed });
-  }
-
-  async function submitLink(event: FormEvent) {
-    event.preventDefault();
-    setLinking(true);
-    setLinkError(null);
-    try {
-      await linkRobloxAccount(robloxName);
-      setRobloxName("");
-    } catch (reason) {
-      const failure = toBackendError(reason);
-      setLinkError(translateError(failure.code, failure.message));
-    } finally {
-      setLinking(false);
-    }
   }
 
   /** Runs a platform action and turns any failure into a readable line. */
@@ -295,46 +284,7 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {settings.robloxUserId ? (
-          <div className="rv-setting-row">
-            <div>
-              <strong>
-                {t("settings.robloxAccount.linked", {
-                  name: settings.robloxUsername ?? "?",
-                  id: settings.robloxUserId,
-                })}
-              </strong>
-            </div>
-            <button
-              className="rv-button"
-              onClick={() => void unlinkRobloxAccount()}
-            >
-              {t("settings.robloxAccount.unlink")}
-            </button>
-          </div>
-        ) : (
-          <form className="rv-setting-row" onSubmit={submitLink}>
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <div className="rv-field">
-                <label htmlFor="rv-roblox-username">
-                  {t("settings.robloxAccount.placeholder")}
-                </label>
-                <input
-                  id="rv-roblox-username"
-                  className="rv-input"
-                  value={robloxName}
-                  onChange={(event) => setRobloxName(event.target.value)}
-                  placeholder="Builderman"
-                  required
-                />
-              </div>
-              {linkError && <p className="rv-error-text">{linkError}</p>}
-            </div>
-            <button className="rv-button is-primary" type="submit" disabled={linking}>
-              {t("settings.robloxAccount.link")}
-            </button>
-          </form>
-        )}
+        <RobloxAccountLink />
       </section>
 
       <section className="rv-settings-section">
@@ -475,19 +425,25 @@ export function SettingsPage() {
           </div>
         </div>
 
+        <p style={{ margin: 0, color: "var(--rv-text-muted)", fontSize: 12 }}>
+          {discord?.builtInAvailable === false
+            ? t("settings.discordNoBuiltIn")
+            : t("settings.discordBuiltIn")}
+        </p>
+
         <div className="rv-setting-row">
           <div>
             <strong>{t("settings.discordEnabled")}</strong>
           </div>
-          <div
-            className="rv-segmented"
-            role="group"
-            aria-label={t("settings.discordEnabled")}
-          >
+          <div className="rv-segmented" role="group" aria-label={t("settings.discordEnabled")}>
             <button
               aria-pressed={settings.discordEnabled}
-              disabled={!settings.discordApplicationId}
-              onClick={() => void saveSettings({ discordEnabled: true })}
+              onClick={() =>
+                void run(async () => {
+                  await saveSettings({ discordEnabled: true });
+                  await backend.discordConnect();
+                }, t("settings.discordConnected"))
+              }
             >
               {t("settings.tracking.on")}
             </button>
@@ -500,32 +456,22 @@ export function SettingsPage() {
           </div>
         </div>
 
-        <div className="rv-setting-row">
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <div className="rv-field">
-              <label htmlFor="rv-discord-id">{t("settings.discordAppId")}</label>
-              <input
-                id="rv-discord-id"
-                className="rv-input"
-                value={discordId}
-                onChange={(event) => setDiscordId(event.target.value)}
-                onBlur={commitDiscordId}
-                placeholder="123456789012345678"
-                inputMode="numeric"
-              />
-              <small>{t("settings.discordAppIdHint")}</small>
-            </div>
+        <details className="rv-advanced">
+          <summary>{t("settings.discordAdvanced")}</summary>
+          <div className="rv-field" style={{ marginTop: "var(--rv-gap-sm)" }}>
+            <label htmlFor="rv-discord-id">{t("settings.discordAppId")}</label>
+            <input
+              id="rv-discord-id"
+              className="rv-input"
+              value={discordId}
+              onChange={(event) => setDiscordId(event.target.value)}
+              onBlur={commitDiscordId}
+              placeholder="123456789012345678"
+              inputMode="numeric"
+            />
+            <small>{t("settings.discordAppIdHint")}</small>
           </div>
-          <button
-            className="rv-button"
-            disabled={!settings.discordEnabled}
-            onClick={() =>
-              void run(() => backend.discordConnect(), t("settings.discordConnected"))
-            }
-          >
-            {t("settings.discordTest")}
-          </button>
-        </div>
+        </details>
       </section>
 
       <section className="rv-settings-section">

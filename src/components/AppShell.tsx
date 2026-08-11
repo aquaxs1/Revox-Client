@@ -13,7 +13,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useI18n } from "../i18n";
 import type { TranslationKey } from "../i18n/types";
 import {
@@ -70,6 +70,7 @@ export function AppShell({
   const { state, saveSettings } = useAppStore();
   const account = useSelectedAccount();
   const [menuOpen, setMenuOpen] = useState(false);
+  const accountChip = useRef<HTMLButtonElement>(null);
   const expanded = state.settings.sidebarExpanded;
 
   return (
@@ -119,6 +120,7 @@ export function AppShell({
           <div className="rv-titlebar-spacer" data-tauri-drag-region />
 
           <button
+            ref={accountChip}
             className="rv-account-chip"
             onClick={() => setMenuOpen((open) => !open)}
             aria-haspopup="menu"
@@ -157,6 +159,7 @@ export function AppShell({
 
           {menuOpen && (
             <AccountMenu
+              anchor={accountChip}
               onClose={() => setMenuOpen(false)}
               onManage={() => {
                 setMenuOpen(false);

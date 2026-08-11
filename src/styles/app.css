@@ -44,6 +44,7 @@
 /* The rail's items spread across its whole height rather than bunching at the
    top, so the sidebar reads as one continuous column. */
 .rv-nav {
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1596,4 +1597,58 @@
 .rv-server-full {
   background: color-mix(in srgb, var(--rv-text-faint) 24%, transparent);
   color: var(--rv-text-faint);
+}
+
+.rv-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--rv-accent) 12%, var(--rv-bg));
+  border: 1px solid color-mix(in srgb, var(--rv-accent) 40%, transparent);
+  border-radius: var(--rv-radius);
+  flex-wrap: wrap;
+}
+
+.rv-suggestion .rv-result-body strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.rv-advanced {
+  padding-top: var(--rv-gap-sm);
+  border-top: 1px solid var(--rv-border);
+}
+
+.rv-advanced summary {
+  color: var(--rv-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rv-advanced summary:hover {
+  color: var(--rv-text);
+}
+
+.rv-onboarding-choice-body {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.rv-onboarding-choice-body small {
+  color: var(--rv-text-muted);
+  font-size: 11px;
+}
+
+.rv-onboarding-panel {
+  width: 100%;
+  padding: var(--rv-pad);
+  background: var(--rv-surface);
+  border: 1px solid var(--rv-border);
+  border-radius: var(--rv-radius-lg);
+  text-align: left;
 }

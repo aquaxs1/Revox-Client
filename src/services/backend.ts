@@ -6,6 +6,7 @@ import type {
   AppBootstrap,
   AppSettings,
   CatalogItem,
+  DiscordStatus,
   FriendEntry,
   Game,
   GameMetadata,
@@ -105,8 +106,11 @@ export function createTauriBackend(invoke: InvokeFunction): BackendPort {
       call<string>(invoke, "export_sessions", { format, path }),
     setAutostart: (enabled) => call<void>(invoke, "set_autostart", { enabled }),
     checkForUpdate: () => call<string | null>(invoke, "check_for_update"),
+    discordStatus: () => call<DiscordStatus>(invoke, "discord_status"),
     discordConnect: () => call<void>(invoke, "discord_connect"),
     discordClear: () => call<void>(invoke, "discord_clear"),
+    detectRobloxAccount: () =>
+      call<RobloxUser | null>(invoke, "detect_roblox_account"),
 
     fetchGameMetadata: (placeId) =>
       call<GameMetadata>(invoke, "fetch_game_metadata", { placeId }),

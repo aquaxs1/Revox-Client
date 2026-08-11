@@ -12,16 +12,20 @@ The interface ships in German and English.
 - **Play screen** — a hero tile for the last played game, your bookmarked games,
   and the most recent sessions. Every past session can be rejoined, returning to
   the same server when Revox recorded which one it was.
-- **Library** — add games by Place ID or official Roblox link. Name, description,
-  icon and player count come from the public Roblox catalog.
+- **Library** — add games by name, Place ID or official Roblox link. Typing a
+  name searches Roblox and you pick from the results; a Place ID or link always
+  resolves directly. Name, description, icon and player count come from the
+  public Roblox catalog.
 - **Explorer** — a stats viewer for Roblox profiles, experiences and UGC/catalog
   items. It shows what the Roblox website shows, plus figures the site does not
   put in front of you: like ratio, visits per active player, account age,
   followers per friend, live server fill distribution, and the resale markup of
   a limited item over its original price. Anything worth revisiting goes on a
   local watchlist.
-- **Friends** — link a public Roblox profile and Revox lists its friends with
-  live presence, what they are playing, and a direct join into their server.
+- **Friends** — Revox reads the signed-in account from Roblox's own local logs
+  and asks "is this you?", so linking is one click; otherwise pick your profile
+  from a search with avatars. It then lists your friends with live presence,
+  what they are playing, and a direct join into their server.
 - **Local profiles** — separate favourites and playtime per profile, with per-profile
   playtime charts. No passwords, no cookies, no Roblox login.
 - **Opt-in playtime tracking** — off until you turn it on. Once enabled, Revox
@@ -34,8 +38,9 @@ The interface ships in German and English.
 - **Friend notifications** — a desktop notification when a friend comes online
   or starts a game. Never fires on the first poll, so starting Revox does not
   produce a burst of them.
-- **Discord Rich Presence** — opt-in, with your own Discord application ID.
-  Revox stores no Discord token and fails soft when Discord is not running.
+- **Discord Rich Presence** — a single switch. Revox ships its own Discord
+  application, so there is no ID to register; power users can still override it.
+  No Discord token is stored, and a closed Discord never blocks a launch.
 - **Watchlist history** — watched profiles, experiences and items are sampled
   every six hours, so the Explorer shows a trend and the change since the last
   reading rather than only a snapshot.
@@ -44,6 +49,10 @@ The interface ships in German and English.
 - **Export** — sessions as CSV or JSON to a file you pick. Nothing is uploaded.
 - **Signed updates** — the updater accepts only packages signed with the public
   key built into the app. See *Configuring updates* below.
+- **Setup wizard** — a five-step first run in the client's own style covering
+  language, theme, the default switches and the optional Roblox link. Every
+  choice is written the moment it is made, so quitting halfway still leaves a
+  configured app.
 - **Appearance** — dark, light or system theme, six accent colors, three density modes.
 
 ## Hard boundaries
@@ -93,8 +102,8 @@ not available in a browser, and launching only reports the URL it *would* open.
 ## Checks
 
 ```bash
-npm run check                                   # 99 frontend tests + production build
-cargo test --manifest-path src-tauri/Cargo.toml # 80 backend tests
+npm run check                                   # 104 frontend tests + production build
+cargo test --manifest-path src-tauri/Cargo.toml # 89 backend tests
 ```
 
 ## Architecture
@@ -115,6 +124,7 @@ cargo test --manifest-path src-tauri/Cargo.toml # 80 backend tests
 | Export | `src-tauri/src/export.rs` | CSV and JSON serializers |
 | Discord | `src-tauri/src/discord.rs` | Rich Presence, fails soft |
 | Roblox API | `src-tauri/src/api/` | Public users, games and catalog lookups |
+| Account hint | `src-tauri/src/roblox/account.rs` | Reads the signed-in user ID from Roblox's logs |
 
 Both backend adapters implement the same `BackendPort`, so the browser preview
 and the desktop app behave identically apart from the platform features noted
@@ -134,6 +144,18 @@ set.
 Roblox's keyword search for experiences is the least stable endpoint Revox
 touches. When it fails the UI says so and points at the Place-ID path, which
 does not depend on it.
+
+## Configuring Discord Rich Presence
+
+Rich Presence needs one Discord application, registered once for the whole
+project rather than per user. Create it at
+<https://discord.com/developers/applications>, then paste its client ID into
+`BUILT_IN_APPLICATION_ID` in `src-tauri/src/discord.rs`. A Discord application
+ID is public by design — it travels in the clear during the RPC handshake — so
+shipping it in the binary is exactly how other launchers do this.
+
+While the constant is empty, the Discord section says so and the switch stays
+harmless: it never silently fails.
 
 ## Configuring updates
 
