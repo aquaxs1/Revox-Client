@@ -1,17 +1,36 @@
-import { CheckCircle2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, X } from "lucide-react";
+import { useEffect } from "react";
+import { useI18n } from "../i18n";
 
-interface ToastProps {
-  message: string;
-  onClose: () => void;
+export interface ToastMessage {
+  text: string;
+  tone: "success" | "error";
 }
 
-export function Toast({ message, onClose }: ToastProps) {
+export function Toast({
+  message,
+  onClose,
+}: {
+  message: ToastMessage;
+  onClose: () => void;
+}) {
+  const { t } = useI18n();
+
+  useEffect(() => {
+    const timer = window.setTimeout(onClose, 6000);
+    return () => window.clearTimeout(timer);
+  }, [message, onClose]);
+
   return (
-    <div className="toast" role="status">
-      <CheckCircle2 size={19} />
-      <span>{message}</span>
-      <button aria-label="Meldung schließen" onClick={onClose}>
-        <X size={17} />
+    <div className="rv-toast" data-tone={message.tone} role="status">
+      {message.tone === "error" ? (
+        <AlertTriangle size={18} aria-hidden />
+      ) : (
+        <CheckCircle2 size={18} aria-hidden />
+      )}
+      <span>{message.text}</span>
+      <button onClick={onClose} aria-label={t("common.close")}>
+        <X size={16} />
       </button>
     </div>
   );

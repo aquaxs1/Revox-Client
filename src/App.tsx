@@ -1,94 +1,190 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppShell, type PageId } from "./components/AppShell";
+import { AddGameDialog } from "./components/AddGameDialog";
 import { LaunchDialog } from "./components/LaunchDialog";
-import { Toast } from "./components/Toast";
-import { Accounts } from "./pages/Accounts";
-import { Dashboard } from "./pages/Dashboard";
-import { LibraryPage } from "./pages/Library";
-import { Performance } from "./pages/Performance";
+import { Onboarding } from "./components/Onboarding";
+import { Toast, type ToastMessage } from "./components/Toast";
+import type { Game } from "./contracts/entities";
+import { I18nProvider, useI18n } from "./i18n";
+import { ExitPage } from "./pages/Exit";
+import { PlayPage } from "./pages/Play";
+import { ProfilePage } from "./pages/Profile";
+import { SavedPage } from "./pages/Saved";
 import { SettingsPage } from "./pages/Settings";
-import { Stats } from "./pages/Stats";
-import { launchRoblox } from "./services/launcher";
-import { AppStoreProvider, useAppStore } from "./state/AppStore";
-import "./styles/tokens.css";
-import "./styles/app.css";
+import { StatsPage } from "./pages/Stats";
+import { isTauri, toBackendError } from "./services/backend";
+import { AppStoreProvider, useAppStore, useSelectedAccount } from "./state/AppStore";
+import type { BackendPort } from "./contracts/commands";
 
-function Experience() {
-  const { state, recordLaunch } = useAppStore();
-  const [activePage, setActivePage] = useState<PageId>("dashboard");
-  const [launchGameId, setLaunchGameId] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-  const game = state.games.find((entry) => entry.id === launchGameId);
-  const account = state.accounts.find(
-    (entry) => entry.id === state.selectedAccountId,
-  )!;
+/** Event the Rust session monitor emits after it writes a session. */
+const SESSION_EVENT = "revox://session-changed";
+
+/** Resolves the `system` theme to a concrete one and keeps it in sync. */
+function useResolvedTheme(theme: string) {
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+
+    function apply() {
+      const resolved =
+        theme === "system" ? (media.matches ? "dark" : "light") : theme;
+      document.documentElement.dataset.theme = resolved;
+    }
+
+    apply();
+    if (theme !== "system") return;
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, [theme]);
+}
+
+function Workspace() {
+  const { t, translateError } = useI18n();
+  const { state, launch, reload, refreshRobloxStatus } = useAppStore();
+  const account = useSelectedAccount();
+  const [page, setPage] = useState<PageId>("play");
+  const [pendingLaunch, setPendingLaunch] = useState<Game | null>(null);
+  const [addingGame, setAddingGame] = useState(false);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+
+  const { theme, accent, spacing } = state.settings;
+  useResolvedTheme(theme);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = state.appearance.theme;
-    document.documentElement.dataset.accent = state.appearance.accent;
-    document.documentElement.dataset.font = state.appearance.font;
-    document.documentElement.dataset.density = state.appearance.density;
-  }, [state.appearance]);
+    document.documentElement.style.setProperty("--rv-accent", accent);
+    document.documentElement.dataset.spacing = spacing;
+  }, [accent, spacing]);
 
-  async function confirmLaunch() {
-    if (!game) return;
+  // Probe Roblox on start and then on a slow cadence, so the status chip and
+  // the exit warning reflect reality without hammering the OS.
+  useEffect(() => {
+    void refreshRobloxStatus();
+    const timer = window.setInterval(() => void refreshRobloxStatus(), 15_000);
+    return () => window.clearInterval(timer);
+  }, [refreshRobloxStatus]);
+
+  // The Rust monitor writes sessions on its own schedule; this pulls the new
+  // rows in so the stats screen updates without a restart.
+  useEffect(() => {
+    if (!isTauri()) return;
+    let unlisten: (() => void) | undefined;
+    void (async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      unlisten = await listen(SESSION_EVENT, () => void reload());
+    })();
+    return () => unlisten?.();
+  }, [reload]);
+
+  const confirmLaunch = useCallback(async () => {
+    if (!pendingLaunch) return;
     try {
-      const result = await launchRoblox(game.placeId);
-      recordLaunch(game.id, true);
-      setToast(
-        result.mode === "preview"
-          ? `Vorschau: ${game.title} würde jetzt offiziell geöffnet.`
-          : `${game.title} wurde an Roblox übergeben.`,
-      );
-    } catch (error) {
-      recordLaunch(game.id, false);
-      setToast(error instanceof Error ? error.message : "Roblox konnte nicht geöffnet werden.");
+      await launch(pendingLaunch);
+      setToast({
+        tone: "success",
+        text: isTauri()
+          ? t("launch.success", { name: pendingLaunch.name })
+          : t("launch.preview", { name: pendingLaunch.name }),
+      });
+    } catch (reason) {
+      const failure = toBackendError(reason);
+      setToast({
+        tone: "error",
+        text: translateError(failure.code, failure.message),
+      });
     } finally {
-      setLaunchGameId(null);
+      setPendingLaunch(null);
     }
+  }, [launch, pendingLaunch, t, translateError]);
+
+  if (state.status === "loading") {
+    return <div className="rv-loading">{t("common.loading")}</div>;
   }
 
-  let page;
-  switch (activePage) {
-    case "library":
-      page = <LibraryPage onLaunch={setLaunchGameId} />;
+  if (state.status === "error") {
+    return (
+      <div className="rv-loading">
+        <div className="rv-empty">
+          <strong>{translateError(state.errorCode ?? "UNEXPECTED")}</strong>
+          <button className="rv-button is-primary" onClick={() => void reload()}>
+            {t("common.retry")}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!state.settings.onboardingComplete) {
+    return <Onboarding />;
+  }
+
+  let content;
+  switch (page) {
+    case "profile":
+      content = <ProfilePage onLaunch={setPendingLaunch} />;
       break;
-    case "accounts":
-      page = <Accounts />;
-      break;
-    case "performance":
-      page = <Performance />;
+    case "saved":
+      content = (
+        <SavedPage
+          onLaunch={setPendingLaunch}
+          onAddGame={() => setAddingGame(true)}
+        />
+      );
       break;
     case "stats":
-      page = <Stats />;
+      content = <StatsPage />;
       break;
     case "settings":
-      page = <SettingsPage />;
+      content = <SettingsPage />;
+      break;
+    case "exit":
+      content = <ExitPage onCancel={() => setPage("play")} />;
       break;
     default:
-      page = <Dashboard onLaunch={setLaunchGameId} onNavigate={setActivePage} />;
+      content = (
+        <PlayPage
+          onLaunch={setPendingLaunch}
+          onAddGame={() => setAddingGame(true)}
+        />
+      );
   }
 
   return (
-    <AppShell activePage={activePage} onNavigate={setActivePage}>
-      {page}
-      {game && (
+    <AppShell activePage={page} onNavigate={setPage}>
+      {content}
+
+      {pendingLaunch && (
         <LaunchDialog
-          game={game}
+          game={pendingLaunch}
           account={account}
-          onClose={() => setLaunchGameId(null)}
+          onClose={() => setPendingLaunch(null)}
           onConfirm={confirmLaunch}
         />
       )}
+
+      {addingGame && (
+        <AddGameDialog
+          onClose={() => setAddingGame(false)}
+          onAdded={(text, tone) => setToast({ text, tone })}
+        />
+      )}
+
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
     </AppShell>
   );
 }
 
-export default function App() {
+function Localized() {
+  const { state } = useAppStore();
   return (
-    <AppStoreProvider>
-      <Experience />
+    <I18nProvider locale={state.settings.locale}>
+      <Workspace />
+    </I18nProvider>
+  );
+}
+
+export default function App({ backend }: { backend: BackendPort }) {
+  return (
+    <AppStoreProvider backend={backend}>
+      <Localized />
     </AppStoreProvider>
   );
 }

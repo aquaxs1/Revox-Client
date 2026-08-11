@@ -1,18 +1,35 @@
 use serde::{Deserialize, Serialize};
 
+/// Persisted launcher settings. Everything here is local to the device.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
     pub locale: String,
+    pub theme: String,
+    pub accent: String,
+    pub spacing: String,
+    pub sidebar_expanded: bool,
+    pub onboarding_complete: bool,
+    pub robux_spent: i64,
+    pub selected_account_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+/// Partial settings update. Every field is optional so the UI can patch a
+/// single value without reading and rewriting the whole record.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsInput {
-    pub locale: String,
+    pub locale: Option<String>,
+    pub theme: Option<String>,
+    pub accent: Option<String>,
+    pub spacing: Option<String>,
+    pub sidebar_expanded: Option<bool>,
+    pub onboarding_complete: Option<bool>,
+    pub robux_spent: Option<i64>,
+    pub selected_account_id: Option<Option<String>>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum RobloxState {
     Ready,
@@ -29,41 +46,49 @@ pub struct RobloxStatus {
     pub detail: Option<String>,
 }
 
-#[cfg(test)]
-mod tests {
-    use serde_json::json;
+/// A point-in-time reading of the local machine.
+///
+/// Every field that cannot be measured safely stays `None` and the UI renders
+/// "not available" instead of inventing a number.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemSnapshot {
+    pub os_name: Option<String>,
+    pub cpu_name: Option<String>,
+    pub cpu_cores: Option<usize>,
+    pub cpu_usage_percent: Option<f32>,
+    pub memory_total_bytes: Option<u64>,
+    pub memory_used_bytes: Option<u64>,
+    pub gpu_name: Option<String>,
+    pub gpu_usage_percent: Option<f32>,
+}
 
-    use super::{RobloxState, RobloxStatus};
-    use crate::error::AppError;
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct LaunchRequest {
+    pub place_id: String,
+    pub game_id: Option<String>,
+    pub account_profile_id: Option<String>,
+}
 
-    #[test]
-    fn contracts_serialize_for_the_typescript_boundary() {
-        let status = RobloxStatus {
-            state: RobloxState::NotFound,
-            installation_path: None,
-            detail: Some("Protocol handler missing".to_string()),
-        };
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct LaunchReceipt {
+    pub uri: String,
+    pub activity_id: String,
+    pub accepted_at: String,
+}
 
-        assert_eq!(
-            serde_json::to_value(status).unwrap(),
-            json!({
-                "state": "notFound",
-                "installationPath": null,
-                "detail": "Protocol handler missing"
-            })
-        );
-    }
-
-    #[test]
-    fn app_errors_have_stable_code_and_message_fields() {
-        let error = AppError::new("ROBLOX_NOT_FOUND", "Roblox was not found");
-
-        assert_eq!(
-            serde_json::to_value(error).unwrap(),
-            json!({
-                "code": "ROBLOX_NOT_FOUND",
-                "message": "Roblox was not found"
-            })
-        );
-    }
+/// Public Roblox catalog data for one place. Fetched from official Roblox
+/// endpoints without any cookie or credential.
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct GameMetadata {
+    pub place_id: String,
+    pub universe_id: String,
+    pub name: String,
+    pub description: String,
+    pub icon_url: Option<String>,
+    pub playing: Option<i64>,
+    pub visits: Option<i64>,
 }

@@ -1,67 +1,94 @@
-# Rift Companion
+# Revox Client
 
-Rift is a German-language Roblox companion launcher prototype built with Tauri 2, React, and TypeScript. It organizes games, local account labels, performance recommendations, appearance settings, and session statistics around the official Roblox launch flow.
+Revox is a desktop launcher for the **official** Roblox client, built with Tauri 2,
+React and TypeScript. It organizes your games, local profiles, playtime and
+statistics around the official Roblox launch flow — without ever touching the
+Roblox client itself.
 
-## Run The Browser Preview
+The interface ships in German and English.
 
-```powershell
-npm.cmd install
-npm.cmd run dev
+## What Revox does
+
+- **Play screen** — a hero tile for the last played game, your bookmarked games,
+  and the most recent sessions.
+- **Library** — add games by Place ID or official Roblox link. Name, description,
+  icon and player count come from the public Roblox catalog.
+- **Local profiles** — separate favourites and playtime per profile, with per-profile
+  playtime charts. No passwords, no cookies, no Roblox login.
+- **Automatic playtime** — Revox watches for the Roblox player process after a
+  launch and writes a real session when it ends.
+- **Statistics** — playtime, distinct games played and a 14-day chart, filterable
+  by profile.
+- **Appearance** — dark, light or system theme, six accent colors, three density modes.
+
+## Hard boundaries
+
+These are built into the product, not options:
+
+- Revox never stores Roblox passwords or `.ROBLOSECURITY` cookies.
+- Revox never patches Roblox files, fonts or FastFlags.
+- Revox never injects DLLs, hooks a graphics API or reads Roblox process memory.
+- Revox never generates gameplay input, macros, cheats or exploits.
+- Roblox is started **only** through a validated `roblox://placeId=<id>` URL.
+- A local profile is a label you choose. Revox never claims to know which Roblox
+  account is actually signed in.
+- Anything that cannot be measured safely is shown as **Not available** rather
+  than as an invented number. There is no sample data in the product.
+
+## Running it
+
+### Desktop app
+
+Needs the Rust toolchain and the Tauri prerequisites for your platform.
+
+```bash
+npm install
+npm run tauri dev
 ```
 
-Open `http://127.0.0.1:1420`.
+Native launching, Roblox detection, hardware readings and session tracking are
+Windows features. On other platforms the app runs but reports those as
+unavailable.
 
-For the production preview:
+### Browser preview
 
-```powershell
-npm.cmd run build
-npm.cmd run preview
+```bash
+npm install
+npm run dev
 ```
 
-## Run The Desktop App
-
-Install the Rust toolchain and the Windows prerequisites listed by Tauri, then run:
-
-```powershell
-npm.cmd run tauri dev
-```
-
-The native shell exposes one narrow command: it validates a numeric Place ID and asks Windows to open `roblox://placeId=<id>` through the installed official Roblox client.
-
-## Included In The Prototype
-
-- Gaming-style dashboard with the Launch Rail, favorites, recent activity, and a system snapshot.
-- Searchable games library with category filters and local favorites.
-- Add-game flow for a numeric Place ID or an official `roblox.com/games/...` URL.
-- Confirmation before handing a Place ID to the official Roblox protocol.
-- Local account profile labels, colors, and per-profile product structure.
-- Performance, Balanced, and Quality recommendations.
-- Dark/light themes, three accents, three launcher font styles, and two density modes.
-- Session statistics and performance placeholders showing the intended reporting experience.
-- Responsive narrow-window navigation and keyboard focus states.
-- Locally bundled original cover artwork for reliable offline rendering.
-
-## Prototype Boundaries
-
-The system and session values are representative prototype data. The current version does not read live CPU, GPU, RAM, FPS, ping, Roblox account, or Roblox game metadata.
-
-Rift intentionally does not:
-
-- store passwords or `.ROBLOSECURITY` cookies;
-- automate or bypass Roblox authentication;
-- modify Roblox files, fonts, or settings;
-- inject into or hook the Roblox client;
-- provide cheats, exploits, or hidden process automation;
-- close background programs or change Windows settings without a future explicit permission flow.
+Opens on `http://127.0.0.1:1420` against an in-memory backend that enforces the
+same validation rules as the Rust one. Roblox metadata and hardware readings are
+not available in a browser, and launching only reports the URL it *would* open.
 
 ## Checks
 
-```powershell
-npm.cmd run check
+```bash
+npm run check                                   # 46 frontend tests + production build
+cargo test --manifest-path src-tauri/Cargo.toml # 35 backend tests
 ```
 
-This runs the 18 unit and interaction tests followed by the TypeScript production build. Native Rust validation additionally requires `cargo check --manifest-path src-tauri/Cargo.toml` once Rust is installed.
+## Architecture
 
-## Original Cover Asset
+| Layer | Location | Responsibility |
+| --- | --- | --- |
+| UI | `src/pages`, `src/components` | Screens, dialogs, shell |
+| State | `src/state/AppStore.tsx` | Single store over the backend port |
+| Port | `src/contracts/commands.ts` | The only surface the UI may use |
+| Adapters | `src/services/` | Tauri adapter and in-memory adapter |
+| Pure logic | `src/domain/` | Place ID parsing, statistics |
+| Commands | `src-tauri/src/lib.rs` | Validated Tauri commands |
+| Persistence | `src-tauri/src/db/` | SQLite with versioned migrations |
+| OS access | `src-tauri/src/roblox/` | Detection, processes, hardware |
+| Sessions | `src-tauri/src/session.rs` | Pure session state machine |
+| Roblox API | `src-tauri/src/metadata.rs` | Public catalog lookups |
 
-`public/covers/experience-grid.png` was generated specifically for this prototype as one six-scene, text-free thumbnail atlas. The UI crops its cells locally for the different game cards.
+Both backend adapters implement the same `BackendPort`, so the browser preview
+and the desktop app behave identically apart from the platform features noted
+above.
+
+## Logo
+
+`src/components/Logo.tsx` draws the Revox mark as inline SVG. It is a hand-traced
+approximation of the original artwork — drop the real vector file in and swap the
+path when you have it.

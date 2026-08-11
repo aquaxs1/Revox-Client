@@ -1,13 +1,23 @@
 use std::collections::BTreeSet;
 
-use rift_companion_lib::db::migrations::apply_migrations;
+use revox_client_lib::db::migrations::apply_migrations;
 use rusqlite::{params, Connection};
 
 fn temporary_database() -> (tempfile::TempDir, Connection) {
     let directory = tempfile::tempdir().unwrap();
-    let path = directory.path().join("rift-test.sqlite");
+    let path = directory.path().join("revox-test.sqlite");
     let connection = Connection::open(path).unwrap();
     (directory, connection)
+}
+
+fn table_columns(connection: &Connection, table: &str) -> BTreeSet<String> {
+    connection
+        .prepare(&format!("PRAGMA table_info({table})"))
+        .unwrap()
+        .query_map([], |row| row.get::<_, String>(1))
+        .unwrap()
+        .collect::<Result<BTreeSet<_>, _>>()
+        .unwrap()
 }
 
 #[test]
@@ -37,7 +47,11 @@ fn migration_creates_the_complete_core_schema_with_foreign_keys() {
         "settings".to_string(),
     ]);
 
-    assert!(expected.is_subset(&tables), "missing tables: {:?}", expected.difference(&tables));
+    assert!(
+        expected.is_subset(&tables),
+        "missing tables: {:?}",
+        expected.difference(&tables)
+    );
     assert_eq!(
         connection
             .query_row("PRAGMA foreign_keys", [], |row| row.get::<_, i64>(0))
@@ -47,17 +61,55 @@ fn migration_creates_the_complete_core_schema_with_foreign_keys() {
 }
 
 #[test]
+fn second_migration_adds_the_revox_columns() {
+    let (_directory, mut connection) = temporary_database();
+
+    apply_migrations(&mut connection).unwrap();
+
+    let settings = table_columns(&connection, "settings");
+    for column in ["sidebar_expanded", "onboarding_complete", "robux_spent"] {
+        assert!(settings.contains(column), "settings is missing {column}");
+    }
+    let games = table_columns(&connection, "games");
+    for column in ["universe_id", "playing", "visits", "metadata_synced_at"] {
+        assert!(games.contains(column), "games is missing {column}");
+    }
+}
+
+#[test]
+fn sessions_accept_the_revox_source_and_reject_unknown_ones() {
+    let (_directory, mut connection) = temporary_database();
+    apply_migrations(&mut connection).unwrap();
+
+    let accepted = connection.execute(
+        "INSERT INTO sessions (id, app_profile_id, started_at, result, source)
+         VALUES (?1, 'default', '2026-08-05T16:00:00Z', 'completed', 'revox')",
+        params!["session-1"],
+    );
+    let rejected = connection.execute(
+        "INSERT INTO sessions (id, app_profile_id, started_at, result, source)
+         VALUES (?1, 'default', '2026-08-05T16:00:00Z', 'completed', 'rift')",
+        params!["session-2"],
+    );
+
+    assert!(accepted.is_ok());
+    assert!(rejected.is_err());
+}
+
+#[test]
 fn migration_is_idempotent() {
     let (_directory, mut connection) = temporary_database();
 
     apply_migrations(&mut connection).unwrap();
     apply_migrations(&mut connection).unwrap();
+    apply_migrations(&mut connection).unwrap();
 
     assert_eq!(
         connection
-            .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| row.get::<_, i64>(0))
+            .query_row("SELECT COUNT(*) FROM schema_migrations", [], |row| row
+                .get::<_, i64>(0))
             .unwrap(),
-        1
+        2
     );
 }
 

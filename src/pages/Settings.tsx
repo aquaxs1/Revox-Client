@@ -1,44 +1,268 @@
-import { Check, Monitor, ShieldCheck, SlidersHorizontal, Type } from "lucide-react";
+import {
+  Check,
+  Cpu,
+  Info,
+  Languages,
+  MonitorCog,
+  RefreshCw,
+  ShieldCheck,
+  SlidersHorizontal,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import type { Spacing, ThemeMode } from "../contracts/entities";
+import { useI18n } from "../i18n";
+import type { Locale, TranslationKey } from "../i18n/types";
 import { useAppStore } from "../state/AppStore";
-import type { AppearanceSettings } from "../state/types";
+import { APP_VERSION } from "../version";
 
-const accentOptions: Array<{ id: AppearanceSettings["accent"]; label: string; color: string }> = [
-  { id: "cyan", label: "Signal Cyan", color: "#45d6e8" },
-  { id: "coral", label: "Pulse Coral", color: "#ff7a6f" },
-  { id: "lime", label: "Volt Lime", color: "#9fe870" },
+export const ACCENT_PRESETS = [
+  "#2E9BF0",
+  "#5BC8F5",
+  "#35C759",
+  "#F5A524",
+  "#F2557A",
+  "#A46BF5",
 ];
 
+const THEMES: ThemeMode[] = ["dark", "light", "system"];
+const SPACINGS: Spacing[] = ["compact", "comfortable", "spacious"];
+
+const BOUNDARY_KEYS: TranslationKey[] = [
+  "settings.boundary.official",
+  "settings.boundary.noPasswords",
+  "settings.boundary.noInjection",
+  "settings.boundary.noFiles",
+  "settings.boundary.local",
+];
+
+function formatBytes(bytes: number | null, locale: string): string | null {
+  if (bytes === null) return null;
+  const gigabytes = bytes / 1024 ** 3;
+  return `${new Intl.NumberFormat(locale === "de" ? "de-DE" : "en-US", {
+    maximumFractionDigits: 1,
+  }).format(gigabytes)} GB`;
+}
+
 export function SettingsPage() {
-  const { state, updateAppearance } = useAppStore();
-  const { appearance } = state;
+  const { t, locale, setLocale } = useI18n();
+  const { state, saveSettings, refreshSystem } = useAppStore();
+  const { settings, system } = state;
+  const [robux, setRobux] = useState(String(settings.robuxSpent));
+
+  useEffect(() => {
+    setRobux(String(settings.robuxSpent));
+  }, [settings.robuxSpent]);
+
+  useEffect(() => {
+    void refreshSystem();
+  }, [refreshSystem]);
+
+  async function chooseLocale(next: Locale) {
+    setLocale(next);
+    await saveSettings({ locale: next });
+  }
+
+  function commitRobux() {
+    const parsed = Number.parseInt(robux, 10);
+    if (Number.isNaN(parsed) || parsed < 0) {
+      setRobux(String(settings.robuxSpent));
+      return;
+    }
+    void saveSettings({ robuxSpent: parsed });
+  }
+
+  const notAvailable = t("common.notAvailable");
+  const memory =
+    system?.memoryTotalBytes !== null && system?.memoryTotalBytes !== undefined
+      ? formatBytes(system.memoryTotalBytes, locale)
+      : null;
 
   return (
-    <div className="page settings-page">
-      <section className="page-heading"><p className="eyebrow">DEIN RIFT</p><h1>Darstellung & Sicherheit</h1><p>Passe nur den Launcher an. Roblox-Dateien und Roblox-Schriften bleiben unberührt.</p></section>
+    <div className="rv-page">
+      <section className="rv-settings-section">
+        <div className="rv-settings-title">
+          <MonitorCog size={20} aria-hidden />
+          <div>
+            <h2>{t("settings.appearance")}</h2>
+            <p>{t("settings.appearanceBody")}</p>
+          </div>
+        </div>
 
-      <section className="settings-section">
-        <div className="settings-section-title"><Monitor size={21} /><div><h2>Oberfläche</h2><p>Theme und Farbsignal für alle Bereiche.</p></div></div>
-        <div className="setting-row"><div><strong>Darstellung</strong><span>Heller oder dunkler Arbeitsbereich</span></div><div className="segmented-control"><button className={appearance.theme === "dark" ? "is-active" : ""} onClick={() => updateAppearance({ theme: "dark" })}>Dunkel</button><button className={appearance.theme === "light" ? "is-active" : ""} onClick={() => updateAppearance({ theme: "light" })}>Hell</button></div></div>
-        <div className="setting-row"><div><strong>Akzentfarbe</strong><span>Markierungen, Status und Fokus</span></div><div className="swatch-group">{accentOptions.map((accent) => <button key={accent.id} className={appearance.accent === accent.id ? "swatch is-active" : "swatch"} onClick={() => updateAppearance({ accent: accent.id })} aria-label={accent.label} title={accent.label} style={{ "--swatch-color": accent.color } as React.CSSProperties}>{appearance.accent === accent.id && <Check size={14} />}</button>)}</div></div>
-      </section>
+        <div className="rv-setting-row">
+          <div>
+            <strong>{t("settings.theme")}</strong>
+          </div>
+          <div className="rv-segmented" role="group" aria-label={t("settings.theme")}>
+            {THEMES.map((theme) => (
+              <button
+                key={theme}
+                aria-pressed={settings.theme === theme}
+                onClick={() => void saveSettings({ theme })}
+              >
+                {t(`settings.theme.${theme}` as const)}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      <section className="settings-section">
-        <div className="settings-section-title"><Type size={21} /><div><h2>Schrift</h2><p>Die Auswahl gilt ausschließlich im Launcher.</p></div></div>
-        <div className="font-grid">
-          <button className={appearance.font === "system" ? "font-option is-active" : "font-option"} onClick={() => updateAppearance({ font: "system" })}><span className="font-preview system-font">Aa</span><strong>Interface</strong><small>Präzise und neutral</small></button>
-          <button className={appearance.font === "condensed" ? "font-option is-active" : "font-option"} onClick={() => updateAppearance({ font: "condensed" })}><span className="font-preview condensed-font">Aa</span><strong>Condensed</strong><small>Kompakt und technisch</small></button>
-          <button className={appearance.font === "rounded" ? "font-option is-active" : "font-option"} onClick={() => updateAppearance({ font: "rounded" })}><span className="font-preview rounded-font">Aa</span><strong>Rounded</strong><small>Weich und freundlich</small></button>
+        <div className="rv-setting-row">
+          <div>
+            <strong>{t("settings.accent")}</strong>
+          </div>
+          <div className="rv-swatches" role="group" aria-label={t("settings.accent")}>
+            {ACCENT_PRESETS.map((accent) => (
+              <button
+                key={accent}
+                className="rv-swatch"
+                style={{ ["--swatch-color" as string]: accent }}
+                aria-pressed={settings.accent.toUpperCase() === accent.toUpperCase()}
+                aria-label={accent}
+                onClick={() => void saveSettings({ accent })}
+              >
+                {settings.accent.toUpperCase() === accent.toUpperCase() && (
+                  <Check size={13} />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rv-setting-row">
+          <div>
+            <strong>{t("settings.density")}</strong>
+          </div>
+          <div className="rv-segmented" role="group" aria-label={t("settings.density")}>
+            {SPACINGS.map((spacing) => (
+              <button
+                key={spacing}
+                aria-pressed={settings.spacing === spacing}
+                onClick={() => void saveSettings({ spacing })}
+              >
+                {t(`settings.density.${spacing}` as const)}
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="settings-section">
-        <div className="settings-section-title"><SlidersHorizontal size={21} /><div><h2>Dichte</h2><p>Mehr Überblick oder mehr Abstand.</p></div></div>
-        <div className="setting-row"><div><strong>Layout-Dichte</strong><span>Beeinflusst Listen und Karten</span></div><div className="segmented-control"><button className={appearance.density === "compact" ? "is-active" : ""} onClick={() => updateAppearance({ density: "compact" })}>Kompakt</button><button className={appearance.density === "comfortable" ? "is-active" : ""} onClick={() => updateAppearance({ density: "comfortable" })}>Komfortabel</button></div></div>
+      <section className="rv-settings-section">
+        <div className="rv-settings-title">
+          <Languages size={20} aria-hidden />
+          <div>
+            <h2>{t("settings.language")}</h2>
+          </div>
+        </div>
+        <div className="rv-setting-row">
+          <div>
+            <strong>{t("settings.language")}</strong>
+          </div>
+          <div className="rv-segmented" role="group" aria-label={t("settings.language")}>
+            <button
+              aria-pressed={locale === "de"}
+              onClick={() => void chooseLocale("de")}
+            >
+              {t("settings.language.german")}
+            </button>
+            <button
+              aria-pressed={locale === "en"}
+              onClick={() => void chooseLocale("en")}
+            >
+              {t("settings.language.english")}
+            </button>
+          </div>
+        </div>
       </section>
 
-      <section className="settings-safety">
-        <div className="settings-section-title"><ShieldCheck size={22} /><div><p className="eyebrow">FESTE GRENZEN</p><h2>Sicherer Companion, kein Client-Mod</h2></div></div>
-        <div className="boundary-list"><span><Check size={16} /> Offizieller Roblox-Startfluss</span><span><Check size={16} /> Lokale Profile ohne Login-Daten</span><span><Check size={16} /> Keine Injection oder Cheats</span><span><Check size={16} /> Keine Client- oder Font-Dateiänderungen</span><span><Check size={16} /> Kein Cookie-Zugriff</span><span><Check size={16} /> Keine versteckte Prozessautomatisierung</span></div>
+      <section className="rv-settings-section">
+        <div className="rv-settings-title">
+          <SlidersHorizontal size={20} aria-hidden />
+          <div>
+            <h2>{t("settings.tracking")}</h2>
+            <p>{t("settings.robuxBody")}</p>
+          </div>
+        </div>
+        <div className="rv-setting-row">
+          <div>
+            <strong>{t("settings.robux")}</strong>
+          </div>
+          <input
+            className="rv-input"
+            style={{ width: 160 }}
+            type="number"
+            min={0}
+            value={robux}
+            onChange={(event) => setRobux(event.target.value)}
+            onBlur={commitRobux}
+            aria-label={t("settings.robux")}
+          />
+        </div>
+      </section>
+
+      <section className="rv-settings-section">
+        <div className="rv-settings-title">
+          <Cpu size={20} aria-hidden />
+          <div>
+            <h2>{t("settings.system")}</h2>
+          </div>
+          <button
+            className="rv-button is-ghost"
+            style={{ marginLeft: "auto" }}
+            onClick={() => void refreshSystem()}
+          >
+            <RefreshCw size={15} />
+            {t("settings.system.refresh")}
+          </button>
+        </div>
+
+        <div className="rv-facts">
+          <div className="rv-fact">
+            <span>{t("settings.system.os")}</span>
+            <strong>{system?.osName ?? notAvailable}</strong>
+          </div>
+          <div className="rv-fact">
+            <span>{t("settings.system.cpu")}</span>
+            <strong>
+              {system?.cpuName ?? notAvailable}
+              {system?.cpuCores ? ` · ${system.cpuCores} Cores` : ""}
+            </strong>
+          </div>
+          <div className="rv-fact">
+            <span>{t("settings.system.gpu")}</span>
+            <strong>{system?.gpuName ?? notAvailable}</strong>
+          </div>
+          <div className="rv-fact">
+            <span>{t("settings.system.memory")}</span>
+            <strong>{memory ?? notAvailable}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="rv-settings-section">
+        <div className="rv-settings-title">
+          <ShieldCheck size={20} aria-hidden />
+          <div>
+            <h2>{t("settings.boundaries")}</h2>
+            <p>{t("settings.boundariesBody")}</p>
+          </div>
+        </div>
+        <div className="rv-boundaries">
+          {BOUNDARY_KEYS.map((key) => (
+            <div className="rv-boundary" key={key}>
+              <Check size={15} aria-hidden />
+              <span>{t(key)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rv-settings-section">
+        <div className="rv-settings-title">
+          <Info size={20} aria-hidden />
+          <div>
+            <h2>{t("settings.about")}</h2>
+            <p>{t("settings.version", { version: APP_VERSION })}</p>
+          </div>
+        </div>
       </section>
     </div>
   );

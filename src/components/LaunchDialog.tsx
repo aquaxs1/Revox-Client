@@ -1,20 +1,27 @@
-import { ExternalLink, ShieldCheck, X } from "lucide-react";
+import { ExternalLink, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-import type { AccountProfile, Game } from "../state/types";
+import type { AccountProfile, Game } from "../contracts/entities";
+import { useI18n } from "../i18n";
+import { Dialog } from "./Dialog";
 
-interface LaunchDialogProps {
-  game: Game;
-  account: AccountProfile;
-  onClose: () => void;
-  onConfirm: () => Promise<void>;
-}
-
+/**
+ * The confirmation shown before a Place ID is handed to Roblox.
+ *
+ * It names the game, the Place ID and the local profile so a launch always
+ * happens under the profile the user actually meant.
+ */
 export function LaunchDialog({
   game,
   account,
   onClose,
   onConfirm,
-}: LaunchDialogProps) {
+}: {
+  game: Game;
+  account: AccountProfile | null;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const { t } = useI18n();
   const [launching, setLaunching] = useState(false);
 
   async function confirm() {
@@ -27,62 +34,40 @@ export function LaunchDialog({
   }
 
   return (
-    <div className="dialog-backdrop" onMouseDown={onClose}>
-      <section
-        className="launch-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="launch-title"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <button className="dialog-close" onClick={onClose} aria-label="Dialog schließen">
-          <X size={19} />
+    <Dialog title={t("launch.title")} onClose={onClose}>
+      <p style={{ margin: 0, fontWeight: 600 }}>{game.name}</p>
+
+      <div className="rv-dialog-facts">
+        <div>
+          <span className="rv-fact-label">{t("launch.placeId")}</span>
+          <strong style={{ display: "block" }}>{game.placeId}</strong>
+        </div>
+        <div>
+          <span className="rv-fact-label">{t("launch.profile")}</span>
+          <strong style={{ display: "block" }}>
+            {account?.username ?? t("launch.profileNone")}
+          </strong>
+        </div>
+        <div>
+          <span className="rv-fact-label">{t("launch.handover")}</span>
+          <strong style={{ display: "block" }}>{t("launch.handoverValue")}</strong>
+        </div>
+      </div>
+
+      <div className="rv-note">
+        <ShieldCheck size={18} aria-hidden />
+        <span>{t("launch.note")}</span>
+      </div>
+
+      <div className="rv-dialog-actions">
+        <button className="rv-button is-ghost" onClick={onClose}>
+          {t("common.cancel")}
         </button>
-        <div className="dialog-game-row">
-          <div
-            className="cover-art dialog-cover"
-            style={{
-              backgroundImage: `url(${game.thumbnail})`,
-              backgroundPosition: game.coverPosition,
-            }}
-          />
-          <div>
-            <p className="eyebrow">OFFIZIELLER START</p>
-            <h2 id="launch-title">Offiziell mit Roblox öffnen?</h2>
-            <p>{game.title} · Place-ID {game.placeId}</p>
-          </div>
-        </div>
-        <div className="launch-summary">
-          <span
-            className="avatar avatar-small"
-            style={{ "--avatar-color": account.color } as React.CSSProperties}
-          >
-            {account.initials}
-          </span>
-          <div>
-            <small>Lokales Profil</small>
-            <strong>{account.username}</strong>
-          </div>
-          <div>
-            <small>Übergabe</small>
-            <strong>Roblox-Protokoll</strong>
-          </div>
-        </div>
-        <div className="safety-note compact">
-          <ShieldCheck size={20} />
-          <div>
-            <strong>Keine Passwörter oder Cookies</strong>
-            <p>Rift übergibt nur die Place-ID an den offiziellen Roblox-Client.</p>
-          </div>
-        </div>
-        <div className="dialog-actions">
-          <button className="secondary-button" onClick={onClose}>Abbrechen</button>
-          <button className="primary-button" onClick={confirm} disabled={launching}>
-            <ExternalLink size={18} />
-            {launching ? "Wird geöffnet …" : "Mit Roblox öffnen"}
-          </button>
-        </div>
-      </section>
-    </div>
+        <button className="rv-button is-play" onClick={confirm} disabled={launching}>
+          <ExternalLink size={16} />
+          {launching ? t("launch.launching") : t("launch.confirm")}
+        </button>
+      </div>
+    </Dialog>
   );
 }

@@ -3,7 +3,7 @@ use std::{
     sync::Mutex,
 };
 
-use rift_companion_lib::{
+use revox_client_lib::{
     contracts::RobloxState,
     error::AppError,
     roblox::{detect_roblox, launch_official, ProcessIdentity, RobloxSystem},
@@ -108,4 +108,17 @@ fn rejects_invalid_place_id_before_opening_anything() {
 
     assert_eq!(error.code, "INVALID_PLACE_ID");
     assert!(system.opened.lock().unwrap().is_empty());
+}
+
+#[test]
+fn only_the_roblox_player_counts_as_a_play_session() {
+    use revox_client_lib::roblox::is_player_process;
+
+    assert!(is_player_process("RobloxPlayerBeta.exe"));
+    assert!(is_player_process("robloxplayerbeta.exe"));
+
+    // Studio being open is not a play session.
+    assert!(!is_player_process("RobloxStudioBeta.exe"));
+    assert!(!is_player_process("RobloxCrashHandler.exe"));
+    assert!(!is_player_process("notepad.exe"));
 }
