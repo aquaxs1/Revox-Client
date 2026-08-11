@@ -169,6 +169,13 @@ No release endpoint is committed, so a build made from this repository reports
 3. Sign releases with the private key; the app verifies the signature before it
    installs anything.
 
+## Building the website
+
+`docs/website/README.md` is a standalone brief: every feature, the brand tokens,
+the logo path, the suggested page structure and — importantly — the list of
+things the site must not claim. A session with only that file can build the
+site without reading this repository.
+
 ## Logo
 
 `src/components/Logo.tsx` draws the Revox mark as inline SVG. It is a hand-traced
