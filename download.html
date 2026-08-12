@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="de" data-lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Download — Revox Client</title>
-<meta name="description" content="Revox Client für Windows herunterladen — Installer oder portable Version.">
+<title>Download Revox</title>
+<meta name="description" content="Download Revox Client for Windows. Installer or portable version.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -17,15 +17,11 @@
       REVOX
     </a>
     <nav class="site-nav">
-      <a class="nav-link" href="features.html"><span class="de">Features</span><span class="en">Features</span></a>
-      <a class="nav-link" href="index.html#vergleich"><span class="de">Vergleich</span><span class="en">Comparison</span></a>
+      <a class="nav-link" href="features.html">Features</a>
+      <a class="nav-link" href="index.html#compare">Compare</a>
       <a class="nav-link" href="index.html#faq">FAQ</a>
       <a class="nav-link" href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
-      <a class="btn btn-primary" style="padding:8px 18px;font-size:14px" href="download.html">Download</a>
-      <div class="lang-toggle" role="group" aria-label="Sprache / Language">
-        <button type="button" data-set-lang="de">DE</button>
-        <button type="button" data-set-lang="en">EN</button>
-      </div>
+      <a class="btn btn-primary btn-nav" href="download.html">Download</a>
     </nav>
   </div>
 </header>
@@ -35,49 +31,36 @@
   <div class="container">
 
     <div class="download-panel" data-download>
-      <svg class="hero-logo" viewBox="0 0 100 100" aria-label="Revox Logo"><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
-      <h1 style="font-size:32px;margin-bottom:8px">
-        <span class="de">Revox herunterladen</span><span class="en">Download Revox</span>
-      </h1>
-      <p style="color:var(--text-muted)">
-        <span class="de">Für Windows · Installer oder portable Version</span>
-        <span class="en">For Windows · installer or portable version</span>
-      </p>
+      <svg class="hero-logo" viewBox="0 0 100 100" aria-label="Revox logo"><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
+      <h1 class="download-title">Download Revox</h1>
+      <p class="download-sub">For Windows. Installer or portable.</p>
 
       <div class="download-row">
         <select class="version-select" aria-label="Version">
           <option>Version 1.0</option>
         </select>
-        <a class="btn btn-green btn-large" data-dl-button href="https://github.com/aquaxs1/Revox-Client/releases">
+        <a class="btn btn-primary btn-large" data-dl-button href="https://github.com/aquaxs1/Revox-Client/releases">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
-          <span class="de">Download</span><span class="en">Download</span>
+          Download
         </a>
       </div>
 
-      <p class="dl-status">
-        <span class="de">Lade Release-Informationen …</span>
-        <span class="en">Loading release information…</span>
-      </p>
+      <p class="dl-status">Loading release information…</p>
 
       <p class="download-alt" data-dl-portable style="display:none">
-        <span class="de">Lieber ohne Installation? </span><span class="en">Prefer no installation? </span>
-        <a href="#"><span class="de">Portable Version laden</span><span class="en">Get the portable version</span></a>
-        <span style="color:var(--text-faint)"> · <span data-portable-name></span></span>
+        Prefer no installation? <a href="#">Get the portable version</a>
+        <span class="dim"> · <span data-portable-name></span></span>
       </p>
     </div>
 
     <div class="download-facts">
-      <p class="fact"><span><span class="de"><b>Installiert ohne Admin-Rechte.</b> Der Installer richtet Revox nur für deinen Benutzer ein — Administratorrechte werden nicht benötigt.</span><span class="en"><b>Installs without admin rights.</b> The installer sets Revox up for your user only — no administrator rights required.</span></span></p>
-      <p class="fact"><span><span class="de"><b>Deutsch und Englisch.</b> Der Installer fragt die Sprache auf der ersten Seite ab; die App selbst lässt sich jederzeit ohne Neustart umschalten.</span><span class="en"><b>German and English.</b> The installer asks for your language on its first page; the app itself switches at any time without a restart.</span></span></p>
-      <p class="fact"><span><span class="de"><b>Klein, weil Tauri.</b> Revox ist mit Tauri 2 gebaut — der Download ist deutlich kleiner als bei einer Electron-App.</span><span class="en"><b>Small, thanks to Tauri.</b> Revox is built with Tauri 2 — the download is much smaller than an Electron app.</span></span></p>
-      <p class="fact"><span><span class="de"><b>Signierte Updates.</b> Der eingebaute Updater akzeptiert nur Pakete, die mit dem in der App hinterlegten öffentlichen Schlüssel signiert sind.</span><span class="en"><b>Signed updates.</b> The built-in updater accepts only packages signed with the public key embedded in the app.</span></span></p>
-      <p class="fact"><span><span class="de"><b>Nur Windows.</b> Natives Starten, Roblox-Erkennung und Session-Tracking sind Windows-Funktionen — Mac und Linux werden nicht unterstützt.</span><span class="en"><b>Windows only.</b> Native launching, Roblox detection and session tracking are Windows features — Mac and Linux are not supported.</span></span></p>
+      <p class="fact"><span><b>Installs in seconds.</b> Set up for your user account, no admin rights needed.</span></p>
+      <p class="fact"><span><b>Light on disk.</b> Built with Tauri, so the download stays small and the app starts fast.</span></p>
+      <p class="fact"><span><b>English and German.</b> Pick your language in the installer and switch any time inside the app.</span></p>
+      <p class="fact"><span><b>Signed updates.</b> New versions are verified against a built-in key before they install.</span></p>
     </div>
 
-    <p class="center" style="margin-top:36px;font-size:14px;color:var(--text-faint)">
-      <span class="de">Alle Versionen und Änderungsprotokolle: <a href="https://github.com/aquaxs1/Revox-Client/releases" rel="noopener">GitHub Releases</a></span>
-      <span class="en">All versions and changelogs: <a href="https://github.com/aquaxs1/Revox-Client/releases" rel="noopener">GitHub releases</a></span>
-    </p>
+    <p class="center download-releases">All versions and changelogs: <a href="https://github.com/aquaxs1/Revox-Client/releases" rel="noopener">GitHub releases</a></p>
   </div>
 </section>
 </main>
@@ -93,15 +76,12 @@
       <a href="download.html">Download</a>
       <a href="index.html#faq">FAQ</a>
       <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
-      <a href="legal.html#impressum">Impressum</a>
-      <a href="legal.html#datenschutz"><span class="de">Datenschutz</span><span class="en">Privacy</span></a>
-      <a href="legal.html#terms"><span class="de">Nutzungsbedingungen</span><span class="en">Terms of Use</span></a>
+      <a href="legal.html#imprint">Imprint</a>
+      <a href="legal.html#privacy">Privacy</a>
+      <a href="legal.html#terms">Terms of Use</a>
       <a href="legal.html#cookies">Cookies</a>
     </div>
-    <p class="footer-note">
-      <span class="de">Revox ist ein unabhängiges Projekt und steht in keiner Verbindung zur Roblox Corporation. Roblox ist eine Marke der Roblox Corporation. Diese Website verwendet keine Cookies.</span>
-      <span class="en">Revox is an independent project and is not affiliated with, endorsed by or sponsored by Roblox Corporation. Roblox is a trademark of Roblox Corporation. This website uses no cookies.</span>
-    </p>
+    <p class="footer-note">Revox is an independent project and is not affiliated with Roblox Corporation. Roblox is a trademark of Roblox Corporation.</p>
   </div>
 </footer>
 
