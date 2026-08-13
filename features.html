@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="de" data-lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Features — Revox Client</title>
-<meta name="description" content="Alle Funktionen des Revox Clients im Detail: Spielen, Wissen, Freunde, Komfort — und ein Blick unter die Haube.">
+<title>Revox Features</title>
+<meta name="description" content="Everything Revox Client does: playing, stats, friends and comfort features, plus a look under the hood.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -17,184 +17,160 @@
       REVOX
     </a>
     <nav class="site-nav">
-      <a class="nav-link active" href="features.html"><span class="de">Features</span><span class="en">Features</span></a>
-      <a class="nav-link" href="index.html#vergleich"><span class="de">Vergleich</span><span class="en">Comparison</span></a>
+      <a class="nav-link active" href="features.html">Features</a>
+      <a class="nav-link" href="index.html#compare">Compare</a>
       <a class="nav-link" href="index.html#faq">FAQ</a>
       <a class="nav-link" href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
-      <a class="btn btn-primary" style="padding:8px 18px;font-size:14px" href="download.html">Download</a>
-      <div class="lang-toggle" role="group" aria-label="Sprache / Language">
-        <button type="button" data-set-lang="de">DE</button>
-        <button type="button" data-set-lang="en">EN</button>
-      </div>
+      <a class="btn btn-primary btn-nav" href="download.html">Download</a>
     </nav>
   </div>
 </header>
 
 <main>
 
-<section class="hero" style="padding:64px 0 8px">
+<section class="hero features-hero">
   <div class="container">
-    <span class="eyebrow"><span class="de">Alle Features im Detail</span><span class="en">Every feature in detail</span></span>
-    <h1 style="font-size:clamp(30px,4.5vw,44px);margin-bottom:14px">
-      <span class="de">Was Revox kann — <span class="grad">ehrlich beschrieben</span></span>
-      <span class="en">What Revox does — <span class="grad">described honestly</span></span>
-    </h1>
-    <p class="sub" style="margin:0 0 8px;max-width:760px">
-      <span class="de">Vier Bereiche: Spielen, Wissen, Freunde und Komfort. Wo eine Funktion Grenzen hat, steht die Grenze direkt dabei — denn was sich nicht sicher messen lässt, zeigt Revox als „Nicht verfügbar“ an, nie als erfundene Zahl.</span>
-      <span class="en">Four areas: playing, knowing, friends and comfort. Where a feature has limits, the limit is stated right next to it — because anything that can't be measured safely shows as "Not available", never as an invented number.</span>
-    </p>
+    <span class="eyebrow">Features</span>
+    <h1>Everything Revox can do</h1>
+    <p class="sub features-sub">Four areas: playing, stats, friends and the little things that make it comfortable to leave running.</p>
   </div>
 </section>
 
-<!-- ============ Group A: Playing ============ -->
+<!-- ============ Playing ============ -->
 <section class="feature-group">
   <div class="container">
-    <span class="group-tag tag-green"><span class="de">Spielen</span><span class="en">Playing</span></span>
-    <h2><span class="de">Starten, wiederfinden, weiterspielen</span><span class="en">Launch, find again, keep playing</span></h2>
+    <span class="group-tag tag-green">Playing</span>
+    <h2>Start fast, pick up where you left off</h2>
     <div class="feature-list">
       <div class="feature-row">
-        <h3><span class="de">Play-Screen (Dashboard)</span><span class="en">Play screen (dashboard)</span></h3>
-        <p><span class="de">Ein Hero-Tile für das zuletzt gespielte Spiel mit großem Play-Button, eine Reihe deiner favorisierten Spiele und eine Spalte mit den letzten Sessions — alles auf einem Bildschirm.</span><span class="en">A hero tile for the most recently played game with a large Play button, a row of bookmarked games, and a column of the most recent sessions — all on one screen.</span></p>
+        <h3>Play screen</h3>
+        <p>Your most recent game gets a big tile and a Play button, with your favourites in a row underneath and recent sessions down the side. Everything you need on one screen.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Jede Session erneut beitreten</span><span class="en">Rejoin any past session</span></h3>
-        <p><span class="de">Jede aufgezeichnete Session hat einen „Erneut beitreten“-Button. Wenn Revox weiß, welcher Server es war, kehrst du auf exakt diesen Server zurück — nicht auf irgendeinen öffentlichen.</span><span class="en">Every recorded session has a "join again" button. When Revox knows which server it was, it returns to that exact server rather than any public one.</span></p>
+        <h3>Rejoin any session</h3>
+        <p>Every session Revox records keeps a Join again button. When it knows which server you were on, it takes you back to that exact one.</p>
       </div>
       <div class="feature-row">
-        <h3>Library</h3>
-        <p><span class="de">Spiele per Name, Place ID oder offiziellem Roblox-Link hinzufügen. Beim Tippen eines Namens durchsucht Revox Roblox und du wählst aus den Treffern. Name, Beschreibung, Icon und Live-Spielerzahl kommen aus dem öffentlichen Roblox-Katalog.</span><span class="en">Add a game by name, Place ID or official Roblox link. Typing a name searches Roblox and you pick from the results. Name, description, icon and live player count come from the public Roblox catalog.</span></p>
-        <p class="limit"><span class="de">Ehrliche Grenze: Die Roblox-Stichwortsuche ist der instabilste Endpunkt, den Revox nutzt. Fällt sie aus, sagt die App das und bietet den Weg über Place IDs und Links an, der nicht davon abhängt.</span><span class="en">Honest limit: Roblox's keyword search is the least stable endpoint Revox uses. When it fails, the app says so and falls back to Place IDs and links, which don't depend on it.</span></p>
+        <h3>Your library</h3>
+        <p>Add a game by name, Place ID or Roblox link. Type a name and Revox searches for you, then pulls in the icon, description and live player count.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Lokale Profile</span><span class="en">Local profiles</span></h3>
-        <p><span class="de">Getrennte Favoriten und Spielzeit pro Profil, jedes mit eigenem Spielzeit-Chart. Profile sind Labels, die du selbst wählst — Revox meldet sich nie bei Roblox an und behauptet nie, zu wissen, welches Konto tatsächlich eingeloggt ist.</span><span class="en">Separate favourites and playtime per profile, each with its own playtime chart. Profiles are labels you choose — Revox never signs in to Roblox and never claims to know which account is actually logged in.</span></p>
+        <h3>Profiles</h3>
+        <p>Keep favourites and playtime separate for each profile, each with its own chart. Handy when the PC is shared.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============ Group B: Knowing ============ -->
+<!-- ============ Stats ============ -->
 <section class="feature-group">
   <div class="container">
-    <span class="group-tag tag-blue"><span class="de">Wissen</span><span class="en">Knowing</span></span>
-    <h2><span class="de">Zahlen, Trends und der beste Server</span><span class="en">Numbers, trends and the best server</span></h2>
+    <span class="group-tag tag-blue">Stats</span>
+    <h2>Know more than the website tells you</h2>
     <div class="feature-list">
       <div class="feature-row">
         <h3>Explorer</h3>
-        <p><span class="de">Ein Stats-Viewer für Profile, Experiences und UGC-/Katalog-Items. Er zeigt alles, was die Roblox-Website zeigt — plus abgeleitete Kennzahlen: bei Profilen das Account-Alter in Tagen und Follower pro Freund; bei Experiences die Like-Quote in %, Besuche pro aktivem Spieler und die Live-Verteilung der Serverauslastung mit Median und Anzahl voller Server; bei Limiteds den Resale-Aufschlag gegenüber dem Originalpreis.</span><span class="en">A stats viewer for profiles, experiences and UGC/catalog items. It shows everything the Roblox website shows — plus derived figures: for profiles, account age in days and followers per friend; for experiences, like ratio in %, visits per active player and the live server-fill distribution with median and full-server count; for limiteds, the resale markup over the original price.</span></p>
+        <p>Look up profiles, experiences and UGC items. On top of the usual numbers you get account age in days, followers per friend, like ratio, visits per active player, live server fill with median, and the resale markup on limited items.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Watchlist mit Verlauf</span><span class="en">Watchlist with history</span></h3>
-        <p><span class="de">Folge einem Profil, einer Experience oder einem Item — Revox zeichnet alle sechs Stunden eine Messung auf. Die Detailansicht zeigt dann pro Kennzahl einen Trend und die Veränderung seit der letzten Messung, nicht nur eine Momentaufnahme. Eine Kennzahl, die Roblox nicht mehr veröffentlicht, erzeugt eine Lücke — niemals eine Null.</span><span class="en">Follow a profile, experience or item — Revox records a reading every six hours. The detail view then shows a trend per metric and the change since the last reading, not just a snapshot. A metric Roblox stopped publishing produces a gap — never a zero.</span></p>
+        <h3>Watchlist with history</h3>
+        <p>Follow anything worth tracking. Revox takes a reading every six hours, so the detail view shows a trend line and what changed since last time.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Server-Browser und Ranking</span><span class="en">Server browser and ranking</span></h3>
-        <p><span class="de">Die Live-Serverliste ist sortiert: beitretbare zuerst, dann nach niedrigstem Ping, dann nach Auslastung. Der beste beitretbare Server ist markiert, und du kannst gezielt einem bestimmten Server beitreten. Ein Server ohne gemeldeten Ping sortiert hinter jeden Server mit Ping.</span><span class="en">The live server list is ordered joinable-first, then by lowest ping, then by how busy it is. The best joinable server is marked, and you can join a specific server directly. A server with no reported ping sorts behind every server that has one.</span></p>
+        <h3>Server browser</h3>
+        <p>Joinable servers come first, sorted by ping and then by how busy they are. The best pick is marked and you can jump straight into any server on the list.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Statistiken</span><span class="en">Statistics</span></h3>
-        <p><span class="de">Gesamtspielzeit, Anzahl verschiedener gespielter Spiele und ein 14-Tage-Chart, filterbar pro lokalem Profil — plus ein Ranking deiner meistgespielten Spiele.</span><span class="en">Total playtime, distinct games played and a 14-day chart, filterable per local profile — plus a most-played ranking.</span></p>
-        <p class="limit"><span class="de">Ehrliche Grenze: Die Spielzeit-Erfassung ist aus, bis du sie einschaltest. Sie ist Opt-in — deine Entscheidung, keine Voreinstellung.</span><span class="en">Honest limit: playtime tracking is off until you turn it on. It's opt-in — your decision, not a default.</span></p>
+        <h3>Playtime statistics</h3>
+        <p>Total hours, how many different games you played and a 14-day chart, filterable per profile, with a most-played ranking.</p>
       </div>
       <div class="feature-row">
         <h3>Export</h3>
-        <p><span class="de">Exportiere deine Sessions als CSV oder JSON in eine Datei deiner Wahl. Nichts wird hochgeladen.</span><span class="en">Export your sessions as CSV or JSON to a file you pick. Nothing is uploaded.</span></p>
+        <p>Take your sessions with you as CSV or JSON, saved wherever you choose.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============ Group C: Friends ============ -->
+<!-- ============ Friends ============ -->
 <section class="feature-group">
   <div class="container">
-    <span class="group-tag tag-orange"><span class="de">Freunde</span><span class="en">Friends</span></span>
-    <h2><span class="de">Sehen, wer online ist — und direkt beitreten</span><span class="en">See who's online — and join directly</span></h2>
+    <span class="group-tag tag-orange">Friends</span>
+    <h2>See who is online and jump in</h2>
     <div class="feature-list">
       <div class="feature-row">
-        <h3><span class="de">Konto-Verknüpfung mit einem Klick</span><span class="en">One-click account linking</span></h3>
-        <p><span class="de">Roblox schreibt die angemeldete Nutzer-ID selbst in seine eigenen lokalen Logs. Revox liest diesen Hinweis, fragt „Bist du das?“ und verknüpft mit einem Klick. Gibt es nichts zu erkennen, übernimmt eine Suche mit Avataren — du wählst ein Gesicht, statt einen Namen zu buchstabieren.</span><span class="en">Roblox writes the signed-in user ID into its own local logs. Revox reads that hint, asks "is this you?" and links with one click. When there is nothing to detect, a search picker with avatars takes over — you choose a face instead of spelling a name.</span></p>
+        <h3>One-click setup</h3>
+        <p>Revox spots which Roblox profile is yours and asks you to confirm it. If you would rather choose yourself, a search with avatars lets you pick a face instead of typing a name.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Freunde mit Live-Presence</span><span class="en">Friends with live presence</span></h3>
-        <p><span class="de">Deine Freundesliste mit dem, was jede Person gerade macht — sortiert, sodass beitretbare Freunde ganz oben stehen.</span><span class="en">Your friends list with what each person is doing right now — sorted so joinable people are at the top.</span></p>
+        <h3>Live presence</h3>
+        <p>Your friends list shows what everyone is doing right now, with joinable people sorted to the top.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Freunden direkt beitreten</span><span class="en">Join a friend directly</span></h3>
-        <p><span class="de">Ein Klick, wenn Roblox den Server veröffentlicht.</span><span class="en">One click when Roblox publishes their server.</span></p>
-        <p class="limit"><span class="de">Ehrliche Grenze: Verbirgt die Privatsphäre-Einstellung eines Freundes seinen Server, kann Revox nicht beitreten — der Button ist dann deaktiviert und der Grund wird genannt. Daten, die Roblox nur einer angemeldeten Session zeigt, sind nicht verfügbar.</span><span class="en">Honest limit: if a friend's join privacy hides their server, Revox cannot join them — the button is disabled and the reason is stated. Data Roblox only shares with a signed-in session is not available.</span></p>
+        <h3>Join in one click</h3>
+        <p>When a friend's server is public, their Join button drops you straight into the same game.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Freunde-Benachrichtigungen</span><span class="en">Friend notifications</span></h3>
-        <p><span class="de">Eine Desktop-Benachrichtigung, wenn ein Freund online kommt oder ein Spiel startet. Sie feuert nie beim ersten Abruf — der Start von Revox erzeugt also keinen Benachrichtigungs-Schwall.</span><span class="en">A desktop notification when a friend comes online or starts a game. It never fires on the first poll, so launching Revox does not produce a burst of them.</span></p>
+        <h3>Notifications</h3>
+        <p>Get a desktop ping the moment a friend comes online or starts a game, so you can jump in while the server is still fresh.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============ Group D: Comfort ============ -->
+<!-- ============ Comfort ============ -->
 <section class="feature-group">
   <div class="container">
-    <span class="group-tag tag-amber"><span class="de">Komfort</span><span class="en">Comfort</span></span>
-    <h2><span class="de">Läuft einfach mit</span><span class="en">It just runs along</span></h2>
+    <span class="group-tag tag-amber">Comfort</span>
+    <h2>Set it up once and forget about it</h2>
     <div class="feature-list">
       <div class="feature-row">
         <h3>Discord Rich Presence</h3>
-        <p><span class="de">Ein Schalter. Zeigt, was du spielst, mit laufendem Timer. Es wird kein Discord-Token gespeichert, und ein geschlossenes Discord blockiert niemals einen Spielstart.</span><span class="en">One switch. Shows what you are playing, with an elapsed timer. No token is stored, and a closed Discord never blocks a launch.</span></p>
+        <p>One switch shows your friends what you are playing, with a live timer. Nothing to set up, it just works.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Tray und Autostart</span><span class="en">Tray and autostart</span></h3>
-        <p><span class="de">Revox kann im Infobereich weiterlaufen und mit Windows starten — so wird Spielzeit auch dann erfasst, wenn das Fenster geschlossen ist.</span><span class="en">Revox can keep running in the notification area and start with Windows, so playtime is recorded even when the window is closed.</span></p>
+        <h3>Tray and autostart</h3>
+        <p>Revox can sit in the notification area and start with Windows, so your playtime keeps counting even with the window closed.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Setup-Assistent</span><span class="en">Setup wizard</span></h3>
-        <p><span class="de">Fünf Schritte beim ersten Start, im Stil des Clients: Willkommen, Sprache und Theme, die Standard-Schalter, die optionale Roblox-Verknüpfung, fertig. Jede Wahl wird sofort gespeichert — wer mittendrin abbricht, hat trotzdem eine konfigurierte App.</span><span class="en">Five steps on first run, in the client's own style: welcome, language and theme, the default switches, the optional Roblox link, done. Every choice is saved as it is made — quitting halfway still leaves a configured app.</span></p>
+        <h3>Setup wizard</h3>
+        <p>Five quick steps on first run: welcome, language and theme, your default switches, the optional Roblox link, done. Every choice saves as you make it.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Aussehen</span><span class="en">Appearance</span></h3>
-        <p><span class="de">Dunkles, helles oder System-Theme, sechs Akzentfarben, drei Dichte-Modi. Deutsch und Englisch, ohne Neustart umschaltbar.</span><span class="en">Dark, light or system theme, six accent colours, three density modes. German and English, switchable without a restart.</span></p>
+        <h3>Themes</h3>
+        <p>Dark, light or follow the system, six accent colours and three density modes. English and German, switchable without a restart.</p>
       </div>
       <div class="feature-row">
-        <h3><span class="de">Signierte Updates</span><span class="en">Signed updates</span></h3>
-        <p><span class="de">Der Updater akzeptiert ausschließlich Pakete, die mit dem in der App eingebauten öffentlichen Schlüssel signiert sind.</span><span class="en">The updater accepts only packages signed with the public key built into the app.</span></p>
+        <h3>Signed updates</h3>
+        <p>New versions are verified against a built-in key before they install.</p>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ============ Under the hood ============ -->
-<section class="block alt" id="technik">
+<section class="block alt" id="tech">
   <div class="container">
-    <span class="eyebrow"><span class="de">Unter der Haube</span><span class="en">Under the hood</span></span>
-    <h2><span class="de">Technik, die man nachlesen kann</span><span class="en">Engineering you can read up on</span></h2>
-    <p class="lead">
-      <span class="de">Revox ist quelloffen entwickelt — der gesamte Code liegt auf <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>.</span>
-      <span class="en">Revox is developed in the open — the entire code lives on <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>.</span>
-    </p>
+    <span class="eyebrow">Under the hood</span>
+    <h2>Built to last</h2>
+    <p class="lead">Revox is developed in the open. The full source is on <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>.</p>
     <div class="tech-grid">
       <div class="card">
         <h3>Stack</h3>
-        <p><span class="de">Tauri 2 (Rust) + React 19 + TypeScript. Kein UI-Framework — ein handgebautes Designsystem.</span><span class="en">Tauri 2 (Rust) + React 19 + TypeScript. No UI framework — a hand-built design system.</span></p>
+        <p>Tauri 2 with Rust, React 19 and TypeScript, on a hand-built design system.</p>
       </div>
       <div class="card">
-        <h3><span class="de">Speicherung</span><span class="en">Storage</span></h3>
-        <p><span class="de">SQLite, lokal auf deinem Gerät, mit versionierten Migrationen. Kein Backend, keine Cloud.</span><span class="en">SQLite, locally on your device, with versioned migrations. No backend, no cloud.</span></p>
+        <h3>Storage</h3>
+        <p>A local SQLite database with versioned migrations, right on your PC.</p>
       </div>
       <div class="card">
-        <h3><span class="de">Roblox-Zugriff</span><span class="en">Roblox access</span></h3>
-        <p><span class="de">Unauthentifizierte Abfragen gegen die öffentlichen <span class="mono">*.roblox.com</span>-APIs (users, friends, presence, games, catalog, economy, thumbnails, apis) — aus Rust statt aus dem WebView, sodass keine Roblox-Antwort unvalidiert die Oberfläche erreicht. Thumbnail-Hosts sind allow-listed und per CSP erzwungen.</span><span class="en">Unauthenticated calls to the public <span class="mono">*.roblox.com</span> APIs (users, friends, presence, games, catalog, economy, thumbnails, apis) — made from Rust rather than the web view, so nothing reaches the page unvalidated. Thumbnail hosts are allow-listed and enforced by the window's CSP.</span></p>
+        <h3>Roblox data</h3>
+        <p>Public Roblox APIs, called from Rust and validated before anything reaches the interface. Thumbnail sources are allow-listed.</p>
       </div>
       <div class="card">
-        <h3>Tests</h3>
-        <p><span class="de">104 Frontend- und 89 Backend-Tests, ausgeführt bei jeder Änderung. Ein eigener Test erzwingt, dass Deutsch und Englisch vollständig und deckungsgleich übersetzt sind.</span><span class="en">104 frontend and 89 backend tests, run on every change. A dedicated test enforces that German and English stay complete and in parity.</span></p>
+        <h3>Tested</h3>
+        <p>104 frontend and 89 backend tests run on every change, including one that keeps both languages complete.</p>
       </div>
-    </div>
-
-    <div style="margin-top:40px">
-      <h3 style="margin-bottom:10px"><span class="de">Was Revox bewusst nicht behauptet</span><span class="en">What Revox deliberately does not claim</span></h3>
-      <p style="color:var(--text-muted);font-size:15px;max-width:760px">
-        <span class="de">Keine FPS- oder Performance-Versprechen (Revox fasst das Spiel nicht an). Keine Konto-Erkennung als Tatsache (Revox liest einen Hinweis aus Roblox' eigenen Logs und fragt dich). Kein Kontowechsel, kein Auto-Login (Profile sind Labels). Keine Cloud, keine Konten, kein Begleitdienst (alles ist lokal). Und keine erfundenen Nutzerzahlen oder Bewertungen — auch nicht auf dieser Website.</span>
-        <span class="en">No FPS or performance promises (Revox doesn't touch the game). No account detection stated as fact (Revox reads a hint from Roblox's own logs and asks you). No account switching, no auto-login (profiles are labels). No cloud, no accounts, no companion service (everything is local). And no invented user counts or ratings — including on this website.</span>
-      </p>
     </div>
   </div>
 </section>
@@ -202,9 +178,9 @@
 <!-- ============ CTA ============ -->
 <section class="cta">
   <div class="container">
-    <h2><span class="de">Überzeugt?</span><span class="en">Convinced?</span></h2>
-    <p><span class="de">Revox ist kostenlos, für Windows, und ändert nichts an Roblox.</span><span class="en">Revox is free, for Windows, and changes nothing about Roblox.</span></p>
-    <a class="btn btn-primary btn-large" href="download.html"><span class="de">Jetzt herunterladen</span><span class="en">Download now</span></a>
+    <h2>Give it a try</h2>
+    <p>Free, fast and built for Windows.</p>
+    <a class="btn btn-primary btn-large" href="download.html">Download now</a>
   </div>
 </section>
 
@@ -221,15 +197,11 @@
       <a href="download.html">Download</a>
       <a href="index.html#faq">FAQ</a>
       <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
-      <a href="legal.html#impressum">Impressum</a>
-      <a href="legal.html#datenschutz"><span class="de">Datenschutz</span><span class="en">Privacy</span></a>
-      <a href="legal.html#terms"><span class="de">Nutzungsbedingungen</span><span class="en">Terms of Use</span></a>
+      <a href="legal.html#privacy">Privacy</a>
+      <a href="legal.html#terms">Terms of Use</a>
       <a href="legal.html#cookies">Cookies</a>
     </div>
-    <p class="footer-note">
-      <span class="de">Revox ist ein unabhängiges Projekt und steht in keiner Verbindung zur Roblox Corporation. Roblox ist eine Marke der Roblox Corporation. Diese Website verwendet keine Cookies.</span>
-      <span class="en">Revox is an independent project and is not affiliated with, endorsed by or sponsored by Roblox Corporation. Roblox is a trademark of Roblox Corporation. This website uses no cookies.</span>
-    </p>
+    <p class="footer-note">Revox is an independent project and is not affiliated with Roblox Corporation. Roblox is a trademark of Roblox Corporation.</p>
   </div>
 </footer>
 

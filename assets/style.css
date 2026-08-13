@@ -1,4 +1,4 @@
-/* Revox Client website — brand tokens from the website brief */
+/* Revox Client website: brand tokens */
 
 :root {
   --accent: #2E9BF0;
@@ -34,10 +34,6 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
-
-/* Language toggle: html[data-lang] decides which copy is visible */
-html[data-lang="de"] .en { display: none !important; }
-html[data-lang="en"] .de { display: none !important; }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { color: var(--accent-bright); }
@@ -89,27 +85,6 @@ img, svg { max-width: 100%; }
 }
 .site-nav a:hover, .site-nav a.active { color: var(--text); }
 
-.lang-toggle {
-  display: flex;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  overflow: hidden;
-}
-.lang-toggle button {
-  background: transparent;
-  border: 0;
-  color: var(--text-faint);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 4px 12px;
-  cursor: pointer;
-}
-.lang-toggle button.active {
-  background: var(--surface-2);
-  color: var(--text);
-}
-
 /* ---------- Buttons ---------- */
 
 .btn {
@@ -123,25 +98,32 @@ img, svg { max-width: 100%; }
   font-weight: 600;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: filter 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: background-position 0.35s ease, box-shadow 0.25s ease, transform 0.15s ease, background 0.15s ease;
 }
+
+/* Blue gradient, white text, gradient slides on hover */
 .btn-primary {
-  background: var(--gradient);
+  background: linear-gradient(120deg, #5BC8F5, #2E9BF0 45%, #1874FF);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
   color: #fff;
+  box-shadow: 0 6px 20px -8px rgba(24, 116, 255, 0.7);
 }
-.btn-primary:hover { filter: brightness(1.12); color: #fff; }
+.btn-primary:hover {
+  background-position: 100% 50%;
+  color: #fff;
+  box-shadow: 0 10px 26px -8px rgba(24, 116, 255, 0.85);
+}
+.btn-primary:active { transform: translateY(1px); }
+
 .btn-secondary {
   background: var(--surface);
   border-color: var(--border);
   color: var(--text);
 }
 .btn-secondary:hover { background: var(--surface-2); color: var(--text); }
-.btn-green {
-  background: var(--green);
-  color: #06220e;
-}
-.btn-green:hover { filter: brightness(1.1); color: #06220e; }
 .btn-large { padding: 16px 34px; font-size: 18px; }
+.btn-nav { padding: 8px 18px; font-size: 14px; }
 .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
 
 /* ---------- Hero ---------- */
@@ -436,6 +418,7 @@ td .yes { color: var(--green); font-weight: 700; }
 td .no { color: var(--red); font-weight: 700; }
 td .maybe { color: var(--amber); font-weight: 700; }
 .mono { font-family: var(--mono); }
+.table-note { margin-top: 18px; color: var(--text-faint); font-size: 14px; }
 
 /* FAQ */
 .faq-item {
@@ -472,6 +455,10 @@ td .maybe { color: var(--amber); font-weight: 700; }
   text-align: center;
 }
 .download-panel .hero-logo { width: 72px; height: 72px; margin-bottom: 20px; }
+.download-title { font-size: 32px; margin-bottom: 8px; }
+.download-sub { color: var(--text-muted); }
+.download-releases { margin-top: 36px; font-size: 14px; color: var(--text-faint); }
+.dim { color: var(--text-faint); }
 .download-row {
   display: flex;
   gap: 12px;
@@ -514,6 +501,11 @@ td .maybe { color: var(--amber); font-weight: 700; }
 .dl-status a { font-weight: 600; }
 
 /* ---------- Feature page ---------- */
+
+.features-hero { padding: 64px 0 8px; }
+.features-hero .container { text-align: left; }
+.features-hero h1 { font-size: clamp(30px, 4.5vw, 44px); margin-bottom: 14px; }
+.features-sub { margin: 0 0 8px; max-width: 760px; }
 
 .feature-group { padding: 56px 0; border-top: 1px solid var(--border); }
 .feature-group:first-of-type { border-top: 0; }
