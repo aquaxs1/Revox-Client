@@ -1,0 +1,43 @@
+name: CI
+
+# Runs both test suites on every push and pull request, so a broken change is
+# caught before anyone tries to cut a release from it.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      # Tauri links against the system web view even for `cargo test`.
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev librsvg2-dev libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev
+
+      - run: npm ci
+
+      - name: Frontend tests and production build
+        run: npm run check
+
+      - name: Backend tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml

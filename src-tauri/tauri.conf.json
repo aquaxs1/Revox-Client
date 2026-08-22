@@ -28,8 +28,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
-    "useLocalToolsDir": true,
+    "targets": [
+      "nsis"
+    ],
     "windows": {
       "nsis": {
         "installMode": "currentUser",
@@ -49,6 +50,18 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUxMzZBNjc3MjVCQkE3REMKUldUY3A3c2xkNlkyNFg5aVVsVFluZXRPUmV2MWtTa2xUejA0bG9Qbi9NNHB3Q0ppYTczZWxBM1cK",
+      "endpoints": [
+        "https://github.com/aquaxs1/Revox-Client/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

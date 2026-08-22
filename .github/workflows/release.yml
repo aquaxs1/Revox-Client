@@ -1,0 +1,91 @@
+name: Release
+
+# Builds the Windows installer and the portable exe, signs them with the
+# updater key, and publishes them as a GitHub Release.
+#
+# Two ways to start it:
+#   - push a tag like v0.4.0
+#   - Actions -> Release -> "Run workflow" (pick a version, no tag needed)
+#
+# Requires two repository secrets:
+#   TAURI_SIGNING_PRIVATE_KEY           the minisign private key
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  its password (empty string if none)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, for example 0.4.0"
+        required: true
+        default: "0.4.0"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      # Rust builds dominate the runtime; caching turns a ~15 minute build into
+      # a couple of minutes on later runs.
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the test suites
+        run: |
+          npm test -- --run
+          cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Build, sign and publish
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v${{ github.event.inputs.version || github.ref_name }}
+          releaseName: Revox Client v${{ github.event.inputs.version || github.ref_name }}
+          releaseBody: |
+            **Revox-Client_*_x64-setup.exe** — installer, German/English, no admin rights needed.
+            **Revox-Client-Portable.exe** — single file, no installation.
+
+            Needs the Microsoft Edge WebView2 runtime, which Windows 10 and 11
+            already ship. The installer fetches it automatically if it is missing.
+          releaseDraft: false
+          prerelease: false
+          args: --bundles nsis --target x86_64-pc-windows-msvc
+
+      # The raw binary is a standalone portable build; the release above only
+      # carries the installer, so it is attached separately under a clear name.
+      - name: Attach the portable exe
+        shell: pwsh
+        run: |
+          $version = if ($env:INPUT_VERSION) { $env:INPUT_VERSION } else { "${{ github.ref_name }}".TrimStart('v') }
+          $source = "src-tauri/target/x86_64-pc-windows-msvc/release/revox-client.exe"
+          if (-not (Test-Path $source)) {
+            $source = "src-tauri/target/release/revox-client.exe"
+          }
+          Copy-Item $source "Revox-Client-Portable.exe"
+          gh release upload "v$version" "Revox-Client-Portable.exe" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}

@@ -73,22 +73,47 @@ These are built into the product, not options:
 - Anything that cannot be measured safely is shown as **Not available** rather
   than as an invented number. There is no sample data in the product.
 
-## Running it
+## Getting the app
 
-### Desktop app
+### 1. Download a release (no tools needed)
 
-Needs the Rust toolchain and the Tauri prerequisites for your platform.
+Releases are built and signed by GitHub Actions and published under
+[Releases](https://github.com/aquaxs1/Revox-Client/releases):
+
+- `Revox-Client_<version>_x64-setup.exe` — installer, German/English selector,
+  installs per user without administrator rights.
+- `Revox-Client-Portable.exe` — one file, no installation.
+
+Both need the Microsoft Edge WebView2 runtime, which Windows 10 and 11 already
+ship; the installer fetches it if it is missing.
+
+### 2. Build it yourself with one double-click
+
+Double-click **`Build-Revox.bat`** in the repository root. It checks for Node.js
+and Rust, installs whatever is missing via `winget`, builds, and opens the
+folder with the finished files.
+
+> If `npm run tauri dev` printed **`failed to run 'cargo metadata' … program not
+> found`**, that is exactly this: Tauri compiles a Rust program, and the Rust
+> toolchain was not installed. Install it from [rustup.rs](https://rustup.rs),
+> **open a new terminal window** so Windows picks it up, and try again — or just
+> use the batch file, which handles it for you.
+
+### 3. Build it from the command line
+
+Needs Node.js 22+ and the Rust toolchain.
 
 ```bash
 npm install
-npm run tauri dev
+npm run tauri build     # installer + portable exe
+npm run tauri dev       # run it with hot reload
 ```
 
-Native launching, Roblox detection, hardware readings and session tracking are
-Windows features. On other platforms the app runs but reports those as
-unavailable.
+Native launching, Roblox detection, hardware readings, the tray, notifications
+and session tracking are Windows features. On other platforms the app runs but
+reports them as unavailable.
 
-### Browser preview
+### Browser preview (UI work only, no Rust needed)
 
 ```bash
 npm install
@@ -96,8 +121,8 @@ npm run dev
 ```
 
 Opens on `http://127.0.0.1:1420` against an in-memory backend that enforces the
-same validation rules as the Rust one. Roblox metadata and hardware readings are
-not available in a browser, and launching only reports the URL it *would* open.
+same validation rules as the Rust one. Roblox lookups, hardware readings and
+anything touching the operating system are unavailable there and say so.
 
 ## Checks
 
@@ -157,17 +182,28 @@ shipping it in the binary is exactly how other launchers do this.
 While the constant is empty, the Discord section says so and the switch stays
 harmless: it never silently fails.
 
-## Configuring updates
+## Releasing
 
-No release endpoint is committed, so a build made from this repository reports
-**update source not configured** and stays fully usable. To enable updates:
+`.github/workflows/release.yml` builds the Windows artefacts, signs them with
+the updater key and publishes a GitHub Release. Start it either by pushing a tag
+(`git tag v0.4.1 && git push origin v0.4.1`) or from **Actions → Release → Run
+workflow**, where you just type the version.
 
-1. `npm run tauri signer generate -- -w ~/.revox/updater.key` — keep the private
-   key out of the repository and out of the installer.
-2. Add the public key and your `latest.json` endpoint under `plugins.updater` in
-   `src-tauri/tauri.conf.json`.
-3. Sign releases with the private key; the app verifies the signature before it
-   installs anything.
+It needs two repository secrets (**Settings → Secrets and variables → Actions**):
+
+| Secret | Value |
+| --- | --- |
+| `TAURI_SIGNING_PRIVATE_KEY` | the contents of your minisign private key file |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | its password, or an empty string |
+
+The matching public key is already committed in `src-tauri/tauri.conf.json`, and
+the update endpoint points at this repository's latest release. The app verifies
+the signature before installing anything, so a release signed with a different
+key is rejected.
+
+Never commit the private key. If it ever leaks, generate a new pair with
+`npm run tauri signer generate`, replace the public key in the config, and ship
+that as a normal download — old installs cannot auto-update across a key change.
 
 ## Building the website
 

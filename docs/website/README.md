@@ -255,10 +255,19 @@ the app's title bar and the logo. It should carry the site's hero too.
 
 ### Download facts
 
-- Two artefacts: an **NSIS installer** (`currentUser` mode, no admin rights,
-  German/English language selector on the first page) and a **portable exe**.
+- Two artefacts, published on GitHub Releases:
+  `Revox-Client_<version>_x64-setup.exe` (NSIS installer, `currentUser` mode, no
+  admin rights, German/English selector on the first page) and
+  `Revox-Client-Portable.exe` (one file, no installation).
+- Built and signed automatically by GitHub Actions; the app verifies the
+  signature before installing an update.
+- Requires the Microsoft Edge WebView2 runtime, which Windows 10 and 11 ship;
+  the installer fetches it if missing.
 - Built with Tauri 2, so the download is small compared to an Electron app.
 - The installer is branded with the Revox mark on a dark sidebar.
+
+Link the download button to
+`https://github.com/aquaxs1/Revox-Client/releases/latest`.
 
 ---
 
@@ -317,8 +326,9 @@ one thing it cannot afford:
 - The Discord application ID is not yet registered, so Rich Presence is inert in
   a build made straight from the repo. Either register it before launch or leave
   the feature off the site until it works.
-- No signed-update endpoint is configured yet, so "automatic updates" should not
-  be promised until a release endpoint and key exist.
+- Signed updates are configured and point at this repository's latest release,
+  so "automatic, signature-verified updates" is safe to state once the first
+  release exists.
 - No screenshots are committed; they must be captured from a build.
-- No public release binaries exist yet — the download section needs real links
-  before the site goes live.
+- No release has been published yet. The release workflow is ready; until it has
+  run once, the download link points at an empty Releases page.
