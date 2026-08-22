@@ -72,7 +72,10 @@ jobs:
             already ship. The installer fetches it automatically if it is missing.
           releaseDraft: false
           prerelease: false
-          args: --bundles nsis --target x86_64-pc-windows-msvc
+          # createUpdaterArtifacts is enabled only here, via the release-only
+          # config override, so it only ever demands a signing key in this
+          # workflow. A plain local `tauri build` needs no key at all.
+          args: --bundles nsis --target x86_64-pc-windows-msvc --config src-tauri/tauri.release.conf.json
 
       # The raw binary is a standalone portable build; the release above only
       # carries the installer, so it is attached separately under a clear name.

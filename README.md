@@ -93,6 +93,13 @@ Double-click **`Build-Revox.bat`** in the repository root. It checks for Node.js
 and Rust, installs whatever is missing via `winget`, builds, and opens the
 folder with the finished files.
 
+This local build needs **no signing key** — it produces a normal, working
+installer and portable exe. The signing key is only used by the GitHub release
+pipeline (see *Releasing* below), which is what makes the app *offer itself* as
+a trusted auto-update to other installs. A local build can still run, and can
+still check for and install updates from a real release; it just cannot serve
+as one itself.
+
 > If `npm run tauri dev` printed **`failed to run 'cargo metadata' … program not
 > found`**, that is exactly this: Tauri compiles a Rust program, and the Rust
 > toolchain was not installed. Install it from [rustup.rs](https://rustup.rs),
@@ -188,6 +195,11 @@ harmless: it never silently fails.
 the updater key and publishes a GitHub Release. Start it either by pushing a tag
 (`git tag v0.4.1 && git push origin v0.4.1`) or from **Actions → Release → Run
 workflow**, where you just type the version.
+
+Signing only happens in this workflow: it is the only build that passes
+`--config src-tauri/tauri.release.conf.json`, the override that turns on
+`createUpdaterArtifacts`. A plain `npm run tauri build` or `Build-Revox.bat`
+never asks for a key, because that setting is off everywhere else.
 
 It needs two repository secrets (**Settings → Secrets and variables → Actions**):
 
