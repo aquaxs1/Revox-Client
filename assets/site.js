@@ -47,10 +47,25 @@
     }
   }
 
+  /* Relabel the button without touching the icon in front of the text. */
+  function setButtonLabel(text) {
+    for (var i = button.childNodes.length - 1; i >= 0; i--) {
+      var node = button.childNodes[i];
+      if (node.nodeType === 3 && node.textContent.trim()) {
+        node.textContent = " " + text;
+        return;
+      }
+    }
+  }
+
   function fallback() {
+    // No build published yet — say so rather than offering a "Download" that
+    // only leads to an empty releases page.
     button.href = RELEASES_URL;
+    setButtonLabel("View releases on GitHub");
     portable.style.display = "none";
-    status.innerHTML = 'The button opens the <a href="' + RELEASES_URL + '">releases page on GitHub</a>. As soon as a build is published there, this page links to it directly.';
+    if (select) select.style.display = "none";
+    status.innerHTML = 'No build has been published yet. The button opens the <a href="' + RELEASES_URL + '">releases page on GitHub</a> — as soon as a build appears there, this page links to it directly.';
   }
 
   fetch("https://api.github.com/repos/" + REPO + "/releases")
