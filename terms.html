@@ -42,27 +42,37 @@
 <main class="legal">
   <h1>Terms of Use</h1>
   <p>Terms of use, privacy and cookie notice for this website and the Revox client.</p>
-  <p class="dim">Last updated: 29 August 2026</p>
+  <p class="dim">Last updated: 16 October 2026</p>
 
   <h2 id="scope">What these terms cover</h2>
   <p>They cover this website and the Revox client. Downloading or using either means you accept them. If you do not, do not use them.</p>
 
   <h2 id="privacy">Privacy policy</h2>
 
+  <h3>Who is responsible</h3>
+  <p>Revox and this site are run by Sebi. For anything about your data, message <a href="https://t.me/aquaxs" rel="noopener">@aquaxs on Telegram</a>.</p>
+
   <h3>This website</h3>
   <ul>
-    <li><b>No cookies, no tracking.</b> This site sets no cookies, uses no analytics and embeds no ad networks.</li>
-    <li><b>Server logs.</b> The hosting provider processes technically necessary connection data such as IP address, time and requested page in order to deliver and secure the site (Art. 6(1)(f) GDPR).</li>
-    <li><b>Downloads.</b> The download button links straight to GitHub, which serves the files and receives your IP address in the process. <a href="https://docs.github.com/site-policy/privacy-policies/github-privacy-statement" rel="noopener">GitHub's privacy statement</a> applies.</li>
+    <li><b>Hosting.</b> This site is hosted by Vercel Inc. (USA), which processes connection data (IP address, time, requested file, browser) to deliver the page and protect it against abuse. Legal basis: legitimate interest, Art. 6(1)(f) GDPR. Vercel is certified under the EU-US Data Privacy Framework; <a href="https://vercel.com/legal/privacy-policy" rel="noopener">Vercel's privacy policy</a> applies.</li>
+    <li><b>No cookies, no tracking.</b> The site sets no cookies, stores nothing in your browser, runs no scripts, uses no analytics and loads nothing from other sites. Text is shown in fonts already on your device, not fonts fetched from Google or any other font service.</li>
+    <li><b>Downloads.</b> The download button links straight to GitHub, which serves the files and receives your IP address in the process. GitHub Inc. (USA) is certified under the EU-US Data Privacy Framework; <a href="https://docs.github.com/site-policy/privacy-policies/github-privacy-statement" rel="noopener">GitHub's privacy statement</a> applies.</li>
   </ul>
 
   <h3>The Revox client</h3>
   <ul>
-    <li><b>Your data stays local.</b> Library, profiles, sessions, statistics and watchlist live in a local SQLite database on your device. There is no Revox server and nothing is transmitted to us.</li>
-    <li><b>Public Roblox data.</b> The app reads public Roblox APIs without signing in, so there are no passwords or login cookies involved.</li>
-    <li><b>Playtime tracking</b> is a setting you turn on yourself and can switch off again at any time. Exports to CSV or JSON happen only when you ask for them.</li>
-    <li><b>Discord Rich Presence</b> is optional and stores no Discord token.</li>
+    <li><b>Your data stays on your PC.</b> Library, profiles, sessions, statistics, watchlist and settings live in a local database (<code>revox-client.sqlite</code> in <code>%APPDATA%\app.revox.client</code>). There is no Revox server, so Sebi receives none of it. Deleting that folder deletes this data.</li>
+    <li><b>Public Roblox data, no login.</b> To show games, profiles, friends, servers and items, the client asks Roblox's public web APIs (<code>*.roblox.com</code>) directly from your PC, without signing in: no password, no <code>.ROBLOSECURITY</code> cookie, no token. Roblox receives your IP address and what is looked up, such as a Place ID, a user ID or a search term. Pictures are loaded from Roblox's image servers (<code>rbxcdn.com</code>). <a href="https://www.roblox.com/info/privacy" rel="noopener">Roblox's privacy policy</a> applies.</li>
+    <li><b>In the background</b>, only for what you set up: with friend notifications on, the client asks Roblox every minute what the friends of your linked profile are doing, and everything on your watchlist is looked up every six hours.</li>
+    <li><b>Linking your Roblox profile.</b> The suggested profile comes from the user ID that Roblox writes into its own log files on your PC (<code>%LOCALAPPDATA%\Roblox\logs</code>). The client reads it locally and asks you to confirm. The ID is then only used for the Roblox lookups above.</li>
+    <li><b>Playtime tracking</b> is off until you turn it on. It then watches for the Roblox process on your PC and writes your sessions to the local database. Exports to CSV or JSON happen only when you ask for them, to a file you pick.</li>
+    <li><b>Discord Rich Presence</b> is off by default. Switched on, the client passes the game's name, your local profile's name and the start time to the Discord app on your PC, which shows them on your Discord profile. No Discord token is stored. <a href="https://discord.com/privacy" rel="noopener">Discord's privacy policy</a> applies.</li>
+    <li><b>Update check.</b> Only when you click <i>Check for updates</i> in Settings does the client fetch the release information from the project's GitHub releases. GitHub receives your IP address; nothing from your library, profiles or settings is sent.</li>
+    <li><b>No telemetry.</b> The client sends no usage statistics, crash reports or analytics anywhere.</li>
   </ul>
+
+  <h3>Your rights</h3>
+  <p>You can ask for access to your data, correction, deletion, restriction, a copy, and object to processing based on legitimate interest (Art. 15–21 GDPR) by messaging <a href="https://t.me/aquaxs" rel="noopener">@aquaxs on Telegram</a>. Apart from the host's connection logs, nothing about you is stored for this project. You can also complain to a data protection authority; in Austria that is the Datenschutzbehörde (<a href="https://www.dsb.gv.at" rel="noopener">dsb.gv.at</a>).</p>
 
   <h2 id="terms">Terms of use</h2>
   <ul>
@@ -77,13 +87,13 @@
   <p>This website uses no cookies of any kind, which is why you will not find a cookie banner here.</p>
 
   <h2 id="third-party">Third-party services</h2>
-  <p>This site and its downloads are hosted by Vercel and GitHub, each under its own terms and privacy policy. The client reads public Roblox APIs and, if you switch it on, talks to your local Discord client. None of those are operated by this project.</p>
+  <p>This site and its downloads are hosted by Vercel and GitHub, each under its own terms and privacy policy. The client reads public Roblox APIs, asks GitHub for the latest version when you check for updates and, if you switch it on, talks to your local Discord client. None of those are operated by this project.</p>
 
   <h2 id="changes">Changes</h2>
   <p>These terms may change as the project does. The version published here is the one that applies, and the date at the top says when it last moved.</p>
 
   <h2 id="contact">Contact</h2>
-  <p>Questions and reports go through <a href="https://github.com/aquaxs1/Revox-Client/issues" rel="noopener">GitHub issues</a>.</p>
+  <p>Revox is run by Sebi. Questions, reports and data requests go to <a href="https://t.me/aquaxs" rel="noopener">@aquaxs on Telegram</a>. Bugs can also go to <a href="https://github.com/aquaxs1/Revox-Client/issues" rel="noopener">GitHub issues</a>.</p>
 
   <h2 id="copyright">Copyright and trademarks</h2>
   <p>The Revox logo, the name Revox Client and the contents of this website belong to the project owner. The client's source code is available on <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a> under the terms stated there. All other trademarks, in particular Roblox, Discord and Windows, belong to their respective owners.</p>
@@ -102,6 +112,7 @@
       <a href="index.html#faq">FAQ</a>
       <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
       <a href="terms.html">Terms of Use</a>
+      <a href="terms.html#privacy">Privacy</a>
     </div>
     <p class="footer-note">Revox is an independent project and is not affiliated with Roblox Corporation. Roblox is a trademark of Roblox Corporation.</p>
   </div>
