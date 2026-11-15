@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B0E13">
+<title>Revox Client</title>
+<meta name="description" content="Revox Client brings your Roblox library, playtime stats, live friend presence and a deep stats explorer into one fast desktop app.">
+<link rel="canonical" href="https://revoxclient.vercel.app/">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="Logo.PNG">
+<link rel="stylesheet" href="assets/style.css">
+<meta property="og:title" content="Revox Client">
+<meta property="og:description" content="Your Roblox library, stats and friends in one place.">
+<meta property="og:image" content="https://revoxclient.vercel.app/assets/og-image.png">
+<meta property="og:url" content="https://revoxclient.vercel.app/">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="index.html">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5BC8F5"/><stop offset="100%" stop-color="#1874FF"/></linearGradient></defs><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
+      REVOX
+    </a>
+    <nav class="site-nav">
+      <a class="nav-link" href="features.html">Features</a>
+      <a class="nav-link" href="setup.html">Setup</a>
+      <a class="nav-link" href="index.html#compare">Compare</a>
+      <a class="nav-link" href="index.html#faq">FAQ</a>
+      <a class="nav-link" href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
+      <a class="btn btn-primary btn-nav" href="download.html">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ Hero ============ -->
+<section class="hero">
+  <div class="container">
+    <svg class="hero-logo" viewBox="0 0 100 100" aria-label="Revox logo"><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
+    <h1>Your Roblox games, stats and friends in <span class="grad">one place</span>.</h1>
+    <p class="sub">Revox is a fast desktop launcher with your own library, playtime tracking, live friend presence and a stats explorer that goes deeper than the website.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary btn-large" href="download.html">Get Revox</a>
+      <a class="btn btn-secondary btn-large" href="features.html">View more</a>
+    </div>
+    <p class="hero-meta">Free for Windows. No build published yet.</p>
+
+    <!-- Illustrated mock-up of the Play screen -->
+    <div class="app-mock" aria-hidden="true">
+      <div class="mock-titlebar">
+        <svg viewBox="0 0 100 100"><path fill="#fff" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
+        REVOX
+        <span class="win-dots"><span></span><span></span><span></span></span>
+      </div>
+      <div class="mock-body">
+        <div class="mock-rail">
+          <span class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21H3z"/></svg></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 15.5c2.5.3 4.5 1.6 5.5 4.5"/></svg></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span>
+        </div>
+        <div class="mock-main">
+          <div class="mock-left">
+            <div class="mock-heading">Last played</div>
+            <div class="mock-hero-tile">
+              <div class="title">Adopt a Pixel Pet</div>
+              <div class="meta">Yesterday · 1 h 42 min</div>
+              <span class="mock-play"><svg viewBox="0 0 12 12"><path fill="currentColor" d="M2 1.5v9l8-4.5z"/></svg> Play</span>
+            </div>
+            <div class="mock-heading">Favourites</div>
+            <div class="mock-favs">
+              <div class="mock-fav"><i></i><b>Tower Run</b></div>
+              <div class="mock-fav"><i></i><b>Obby Kingdom</b></div>
+              <div class="mock-fav"><i></i><b>City Tycoon</b></div>
+              <div class="mock-fav"><i></i><b>Speed Race X</b></div>
+            </div>
+          </div>
+          <div class="mock-right">
+            <div class="mock-heading">Last sessions</div>
+            <div class="mock-session"><span class="thumb"></span><span class="info"><b>Tower Run</b><small>48 min · Server #a41f</small></span><span class="join">Rejoin</span></div>
+            <div class="mock-session"><span class="thumb"></span><span class="info"><b>City Tycoon</b><small>1 h 12 min</small></span><span class="join">Rejoin</span></div>
+            <div class="mock-session"><span class="thumb"></span><span class="info"><b>Obby Kingdom</b><small>26 min · Server #09c2</small></span><span class="join">Rejoin</span></div>
+            <div class="mock-session"><span class="thumb"></span><span class="info"><b>Speed Race X</b><small>17 min</small></span><span class="join">Rejoin</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Trust ============ -->
+<section class="block alt" id="safe">
+  <div class="container">
+    <span class="eyebrow">Safe by design</span>
+    <h2>Your account stays yours</h2>
+    <p class="lead">Revox is built on Roblox's own launch flow and public data, so you get all the extras with none of the risk.</p>
+    <div class="boundaries">
+      <div class="boundary"><span class="check">✓</span><p><b>No password, ever</b>Revox runs on public Roblox data. There is no login, so nothing sensitive to store.</p></div>
+      <div class="boundary"><span class="check">✓</span><p><b>Official launch flow</b>Games start through Roblox's own <span class="mono">roblox://</span> link, exactly like clicking Play on the site.</p></div>
+      <div class="boundary"><span class="check">✓</span><p><b>Your files stay untouched</b>Revox works alongside Roblox and leaves the client exactly as you installed it.</p></div>
+      <div class="boundary"><span class="check">✓</span><p><b>Everything stays on your PC</b>Your library, sessions and stats live in a local database. No accounts, no uploads.</p></div>
+      <div class="boundary"><span class="check">✓</span><p><b>Updates on your terms</b>Revox only checks for a new version when you ask it to, and you install updates yourself.</p></div>
+      <div class="boundary"><span class="check">✓</span><p><b>Real numbers only</b>Every figure you see comes straight from Roblox's public data.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Feature summary ============ -->
+<section class="block" id="features">
+  <div class="container">
+    <span class="eyebrow">Features</span>
+    <h2>Everything you need around the game</h2>
+    <p class="lead">A quick look at what Revox gives you. The <a href="features.html">full tour</a> has the details.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4.5v15l13-7.5z"/></svg></div>
+        <h3>Play and rejoin</h3>
+        <p>Your last game sits front and centre with a big Play button. Every past session can be picked up again, right back on the same server.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></div>
+        <h3>Your own library</h3>
+        <p>Add games by name, Place ID or link. Icons, descriptions and live player counts fill themselves in.</p>
+      </div>
+      <div class="card">
+        <div class="icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+        <h3>Stats explorer</h3>
+        <p>Look up any profile, experience or UGC item and see numbers the website keeps buried: like ratio, server fill, account age, resale markup.</p>
+      </div>
+      <div class="card">
+        <div class="icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="4"/></svg></div>
+        <h3>Watchlist</h3>
+        <p>Follow anything worth tracking. Revox takes a reading every six hours so you see trends, not just today's number.</p>
+      </div>
+      <div class="card">
+        <div class="icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 15.5c2.5.3 4.5 1.6 5.5 4.5"/></svg></div>
+        <h3>Friends and presence</h3>
+        <p>See who is online and what they are playing. Joinable friends sit at the top, one click away.</p>
+      </div>
+      <div class="card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></div>
+        <h3>Playtime stats</h3>
+        <p>Total hours, games played and a 14-day chart. Export any of it to CSV or JSON whenever you like.</p>
+      </div>
+      <div class="card">
+        <div class="icon amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg></div>
+        <h3>Made comfortable</h3>
+        <p>Discord Rich Presence, tray mode, autostart, dark and light themes, six accent colours. English and German built in.</p>
+      </div>
+      <div class="card">
+        <div class="icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5.5v5.7c0 4.9 3.4 8.6 8 10.3 4.6-1.7 8-5.4 8-10.3V5.5z"/><path d="m8.8 12 2.2 2.2 4.2-4.4"/></svg></div>
+        <h3>Profiles</h3>
+        <p>Keep separate favourites and playtime for each profile, each with its own chart.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Insights ============ -->
+<section class="block alt" id="insights">
+  <div class="container">
+    <span class="eyebrow">Insights</span>
+    <h2>Numbers the website keeps buried</h2>
+    <p class="lead">The Explorer takes Roblox's public data and does the maths for you.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Look up</th>
+            <th>And you also get</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Profiles</td>
+            <td>Account age in days, followers per friend</td>
+          </tr>
+          <tr>
+            <td>Experiences</td>
+            <td>Like ratio in %, visits per active player, live server fill with median and full-server count</td>
+          </tr>
+          <tr>
+            <td>UGC and catalog</td>
+            <td>Resale markup of a limited item over its original price</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">There is a server browser too. It sorts joinable servers first by ping and fill, marks the best pick and lets you jump straight into it.</p>
+  </div>
+</section>
+
+<!-- ============ Comparison ============ -->
+<section class="block" id="compare">
+  <div class="container">
+    <span class="eyebrow">Compare</span>
+    <h2>What you get with Revox</h2>
+    <p class="lead">Most launchers stop at starting the game. Revox picks up where they leave off.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Revox</th>
+            <th>Other launchers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Library with favourites</td>
+            <td><span class="yes">Yes</span></td>
+            <td><span class="no">Rarely</span></td>
+          </tr>
+          <tr>
+            <td>Rejoin the exact same server</td>
+            <td><span class="yes">Yes</span></td>
+            <td><span class="no">No</span></td>
+          </tr>
+          <tr>
+            <td>Stats explorer with history</td>
+            <td><span class="yes">Yes</span></td>
+            <td><span class="no">No</span></td>
+          </tr>
+          <tr>
+            <td>Friends list with live presence</td>
+            <td><span class="yes">Yes</span></td>
+            <td><span class="no">No</span></td>
+          </tr>
+          <tr>
+            <td>Playtime tracking and export</td>
+            <td><span class="yes">Yes</span></td>
+            <td><span class="no">Rarely</span></td>
+          </tr>
+          <tr>
+            <td>Server browser with ping ranking</td>
+            <td><span class="yes">Yes</span></td>
+            <td><span class="no">No</span></td>
+          </tr>
+          <tr>
+            <td>Works without your password</td>
+            <td><span class="yes">Yes</span></td>
+            <td><span class="maybe">Varies</span></td>
+          </tr>
+          <tr>
+            <td>Discord Rich Presence</td>
+            <td><span class="yes">Yes</span></td>
+            <td><span class="maybe">Varies</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="block alt" id="faq">
+  <div class="container">
+    <span class="eyebrow">FAQ</span>
+    <h2>Good to know</h2>
+    <div class="faq-wrap">
+      <details class="faq-item">
+        <summary>Is Revox safe to use?</summary>
+        <div class="answer">Yes. Revox starts games through Roblox's official launch link and reads only public Roblox data. It works alongside the Roblox client rather than modifying it.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Do I need to log in?</summary>
+        <div class="answer">No. There is no sign-in at all. For the friends list you just confirm which Roblox profile is yours, or pick it from a search with avatars.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Where is my data stored?</summary>
+        <div class="answer">In a local database on your PC. There is no Revox server and nothing gets uploaded. You can export your sessions to CSV or JSON any time.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Can I join my friends' games?</summary>
+        <div class="answer">Yes. When a friend's server is public, their entry gets a Join button that drops you straight in.</div>
+      </details>
+      <details class="faq-item">
+        <summary>How does playtime tracking work?</summary>
+        <div class="answer">Turn it on once and Revox records a session every time you finish playing, then builds your charts and rankings from it.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Which systems are supported?</summary>
+        <div class="answer">Revox is built for Windows and installs for your user account in seconds, no admin rights needed.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Does this website use cookies?</summary>
+        <div class="answer">No cookies and no tracking. See the <a href="terms.html#privacy">privacy page</a> for the details.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="cta">
+  <div class="container">
+    <h2>Ready when you are</h2>
+    <p>Free, fast and built for Windows.</p>
+    <a class="btn btn-primary btn-large" href="download.html">Download Revox</a>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <a class="footer-brand" href="index.html">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
+      REVOX
+    </a>
+    <div class="footer-links">
+      <a href="features.html">Features</a>
+      <a href="setup.html">Setup</a>
+      <a href="download.html">Download</a>
+      <a href="index.html#faq">FAQ</a>
+      <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
+      <a href="terms.html">Terms of Use</a>
+      <a href="terms.html#privacy">Privacy</a>
+    </div>
+    <p class="footer-note">Revox is an independent project and is not affiliated with Roblox Corporation. Roblox is a trademark of Roblox Corporation.</p>
+  </div>
+</footer>
+
+</body>
+</html>
