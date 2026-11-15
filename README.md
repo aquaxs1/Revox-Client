@@ -217,12 +217,15 @@ Never commit the private key. If it ever leaks, generate a new pair with
 `npm run tauri signer generate`, replace the public key in the config, and ship
 that as a normal download — old installs cannot auto-update across a key change.
 
-## Building the website
+## Website
 
-`docs/website/README.md` is a standalone brief: every feature, the brand tokens,
-the logo path, the suggested page structure and — importantly — the list of
-things the site must not claim. A session with only that file can build the
-site without reading this repository.
+The marketing site (<https://revoxclient.vercel.app>) lives in [`site/`](site):
+plain HTML and CSS, no build step. Vercel deploys it with its Root Directory set
+to `site`; see [`site/README.md`](site/README.md).
+
+`docs/website/README.md` is the standalone brief the site was written from:
+every feature, the brand tokens, the logo path, the page structure and —
+importantly — the list of things the site must not claim.
 
 ## Logo
 

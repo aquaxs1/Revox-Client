@@ -4,7 +4,8 @@ The marketing site for [Revox Client](https://github.com/aquaxs1/Revox-Client),
 a desktop launcher for the official Roblox client. Plain HTML and CSS, no build
 step, deployed on Vercel to <https://revoxclient.vercel.app>.
 
-The app itself lives in a separate repository. This one only holds the site.
+It lives in the `site/` folder of the app's repository; nothing outside this
+folder is part of the site.
 
 ## Layout
 
@@ -31,6 +32,7 @@ Website-info.txt      the brief this site was written from
 There is nothing to install. Open a page in a browser, or serve the folder:
 
 ```bash
+cd site
 python3 -m http.server 8000
 ```
 
@@ -40,8 +42,9 @@ pointing at its own URL.
 
 ## Deploying
 
-Vercel builds from `main` on every push — there is no build command, the folder
-is served as it is.
+In the Vercel project, set **Root Directory** to `site` (Settings → Build and
+Deployment), framework preset **Other**, build and output commands empty.
+Vercel then deploys from `main` on every push and serves this folder as it is.
 
 ## Tone
 
@@ -51,4 +54,4 @@ claims what the app actually does. `Website-info.txt` spells this out.
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](../LICENSE).
