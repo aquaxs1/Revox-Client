@@ -1,111 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0B0E13">
-<title>Setup — Revox</title>
-<meta property="og:type" content="website">
-<meta property="og:title" content="Setup — Revox">
-<meta property="og:description" content="Set up Revox: install it, pick your language, add games to your library and turn on playtime tracking.">
-<meta name="description" content="Set up Revox: install it, pick your language, add games to your library and turn on playtime tracking.">
-<link rel="canonical" href="https://revoxclient.vercel.app/setup.html">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="apple-touch-icon" href="Logo.PNG">
-<link rel="stylesheet" href="assets/style.css">
-<meta property="og:image" content="https://revoxclient.vercel.app/assets/og-image.png">
-<meta property="og:url" content="https://revoxclient.vercel.app/setup.html">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Setup — Revox</title>
+  <meta name="description" content="Set up Revox: install it, pick your language, add games to your library and turn on playtime tracking.">
+  <link rel="canonical" href="https://revox-client.vercel.app/setup">
+  <meta name="theme-color" content="#050806">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Revox">
+  <meta property="og:title" content="Setup — Revox">
+  <meta property="og:description" content="Set up Revox: install it, pick your language, add games to your library and turn on playtime tracking.">
+  <meta property="og:url" content="https://revox-client.vercel.app/setup">
+  <meta property="og:image" content="https://revox-client.vercel.app/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/logo-180.png">
+  <link rel="preload" href="assets/aqx/fonts/bodoni-moda-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/aqx/fonts/inter-tight-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/aqx/aqx.css">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/aqx/boot.js"></script>
+  <script type="module" src="assets/aqx/aqx.js"></script>
 </head>
 <body>
+  <a class="skip" href="#main">Skip to content</a>
+  <canvas class="aqx-sky" aria-hidden="true"></canvas>
+  <div class="aqx-aura" aria-hidden="true"></div>
+  <div class="aqx-progress" aria-hidden="true"></div>
 
-<header class="site-header">
-  <div class="container">
-    <a class="brand" href="index.html">
-      <svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5BC8F5"/><stop offset="100%" stop-color="#1874FF"/></linearGradient></defs><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
-      REVOX
-    </a>
-    <nav class="site-nav">
-      <a class="nav-link" href="features.html">Features</a>
-      <a class="nav-link" href="setup.html" aria-current="page">Setup</a>
-      <a class="nav-link" href="index.html#compare">Compare</a>
-      <a class="nav-link" href="index.html#faq">FAQ</a>
-      <a class="nav-link" href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
-      <a class="btn btn-primary btn-nav" href="download.html">Download</a>
-    </nav>
-  </div>
-</header>
+  <header class="nav" data-stuck="false" data-open="false">
+    <div class="nav-inner">
+      <a class="brand" href="./" aria-label="Revox home"><img src="favicon.svg" alt="" width="32" height="32"><span>Revox</span></a>
+      <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-links"><span></span></button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="features">Features</a></li>
+        <li><a href="setup" aria-current="page">Setup</a></li>
+        <li><a href="./#compare">Compare</a></li>
+        <li><a href="./#faq">FAQ</a></li>
+        <li><a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a></li>
+        <li><a class="btn btn-primary btn-sm" href="download">Download</a></li>
+      </ul>
+    </div>
+  </header>
 
-<main>
-<section class="hero" style="padding-bottom:32px">
-  <div class="container">
-    <h1 class="download-title">Setup</h1>
-    <p class="download-sub">From the download to your first launch. Four steps, no admin rights.</p>
-  </div>
-</section>
+  <main id="main">
+<header class="page-head">
+      <div class="stage" data-scene="assets/scene.js" data-mode="mini" aria-hidden="true"><canvas></canvas></div>
+      <div class="page-head-inner">
+        <span class="eyebrow">Setup</span>
+        <h1>Setup</h1>
+        <p class="lead">From the download to your first launch. Four steps, no admin rights.</p>
+      </div>
+    </header>
 
-<section class="block alt">
-  <div class="container">
-    <h2>Getting it running</h2>
-    <div class="cards">
-      <div class="card">
-        <h3>1 · Install it</h3>
-        <p>Run the installer from the <a href="download.html">download page</a>. It sets Revox up for
-          your user account, so Windows does not ask for admin rights. Prefer no installation?
-          The release also carries a portable archive — unpack it anywhere and run it from there.</p>
+    <section class="sec" id="install">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="eyebrow">Four steps</span>
+          <h2>Getting it <em>running</em></h2>
+        </div>
+        <ol class="steps">
+          <li class="reveal">
+            <h3>Install it</h3>
+            <p>Run the installer from the <a class="textlink" href="download">download page</a>. It sets Revox up for your user account, so Windows does not ask for admin rights. Prefer no installation? The release also carries a portable archive — unpack it anywhere and run it from there.</p>
+          </li>
+          <li class="reveal">
+            <h3>Pick your language</h3>
+            <p>English and German. The installer asks once, and you can switch any time under <b>Settings → Language</b> without reinstalling.</p>
+          </li>
+          <li class="reveal">
+            <h3>Build your library</h3>
+            <p>Search for a game and add it to your library. Revox remembers where you left off, so the next launch takes one click. No Roblox sign-in happens here — it reads the public API only.</p>
+          </li>
+          <li class="reveal">
+            <h3>Optional extras</h3>
+            <p>Turn on playtime tracking to collect your own statistics, and Discord Rich Presence to show what you are playing. Both are off until you switch them on, and both can be switched off again.</p>
+          </li>
+        </ol>
       </div>
-      <div class="card">
-        <h3>2 · Pick your language</h3>
-        <p>English and German. The installer asks once, and you can switch any time under
-          <b>Settings → Language</b> without reinstalling.</p>
+    </section>
+
+    <section class="sec" id="updates">
+      <div class="wrap">
+        <div class="cta reveal">
+          <h2>Keeping it <em>updated</em></h2>
+          <p class="lead">Click <i>Check for updates</i> in Settings to see whether a new version is out. Revox does not download or install anything by itself: get the new build from the <a class="textlink" href="https://github.com/aquaxs1/Revox-Client/releases" rel="noopener">releases page</a> and install it.</p>
+          <div class="btn-row">
+            <a class="btn btn-primary btn-lg" href="download"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>Download Revox</a>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <h3>3 · Build your library</h3>
-        <p>Search for a game and add it to your library. Revox remembers where you left off, so the
-          next launch takes one click. No Roblox sign-in happens here — it reads the public API only.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-about">
+          <a class="brand" href="./"><img src="favicon.svg" alt="" width="32" height="32" loading="lazy"><span>Revox</span></a>
+          <p>A desktop launcher for the official Roblox client: your games, stats and friends in one place.</p>
+        </div>
+        <nav class="footer-col" aria-label="Revox">
+          <h2>Revox</h2>
+          <ul>
+            <li><a href="features">Features</a></li>
+            <li><a href="setup">Setup</a></li>
+            <li><a href="download">Download</a></li>
+            <li><a href="./#faq">FAQ</a></li>
+          </ul>
+        </nav>
+        <nav class="footer-col" aria-label="Project">
+          <h2>Project</h2>
+          <ul>
+            <li><a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a></li>
+            <li><a href="https://github.com/aquaxs1/Revox-Client/releases" rel="noopener">Releases</a></li>
+            <li><a href="https://github.com/aquaxs1/Revox-Client/issues" rel="noopener">Report a problem</a></li>
+          </ul>
+        </nav>
+        <nav class="footer-col" aria-label="Legal">
+          <h2>Legal</h2>
+          <ul>
+            <li><a href="terms">Terms of Use</a></li>
+            <li><a href="terms#privacy">Privacy</a></li>
+          </ul>
+        </nav>
       </div>
-      <div class="card">
-        <h3>4 · Optional extras</h3>
-        <p>Turn on playtime tracking to collect your own statistics, and Discord Rich Presence to show
-          what you are playing. Both are off until you switch them on, and both can be switched off again.</p>
+      <div class="family">
+        <span class="family-label">More by AquAxs</span>
+        <ul>
+          <li><a href="https://aqua.is-a.dev/portfolio" data-home rel="noopener">All projects</a></li>
+          <li><a href="https://pfpair.app/" rel="noopener">Pfpair</a></li>
+          <li><a href="https://handled-market.vercel.app/" rel="noopener">Handled</a></li>
+          <li><a href="https://larpcorddc.vercel.app/" rel="noopener">Larpcord</a></li>
+          <li><a href="https://mybluejarvis.vercel.app/" rel="noopener">My Jarvis</a></li>
+          <li><a href="https://guardiantus-av.vercel.app/" rel="noopener">Guardiantus AV</a></li>
+          <li><a href="https://explorer-manager.vercel.app/" rel="noopener">Explorer Manager</a></li>
+          <li><a href="https://cipher-box-file-encrypter.vercel.app/" rel="noopener">CipherBox</a></li>
+          <li><a href="https://easy-cloner.vercel.app/" rel="noopener">Easy Server Cloner</a></li>
+          <li><a href="https://simple-skin.vercel.app/" rel="noopener">Simple Skin</a></li>
+          <li><a href="https://autobuild-gui.vercel.app/" rel="noopener">Autobuild GUI</a></li>
+          <li><a href="https://timetrackerextension.vercel.app/" rel="noopener">WebsiteTimeTrack</a></li>
+          <li><a href="https://wave-uninstaller.vercel.app/" rel="noopener">Wave Uninstaller</a></li>
+          <li><a href="https://discord-sakurabot.vercel.app/" rel="noopener">Sakura Bot</a></li>
+          <li><a href="https://chesstrainer.cc.cd/" rel="noopener">Chess Trainer</a></li>
+        </ul>
+      </div>
+      <div class="footer-legal">
+        <p>© 2026 AquAxs · MIT licence</p>
+        <p>Revox is an independent project and is not affiliated with Roblox Corporation. Roblox is a trademark of Roblox Corporation.</p>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="block">
-  <div class="container">
-    <h2>Keeping it updated</h2>
-    <p>Click <i>Check for updates</i> in Settings to see whether a new version is out. Revox does not
-      download or install anything by itself: get the new build from the
-      <a href="https://github.com/aquaxs1/Revox-Client/releases" rel="noopener">releases page</a> and install
-      it.</p>
-    <p class="center" style="margin-top:24px">
-      <a class="btn btn-primary" href="download.html">Download Revox</a>
-    </p>
-  </div>
-</section>
-</main>
-
-<footer class="site-footer">
-  <div class="container">
-    <a class="footer-brand" href="index.html">
-      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
-      REVOX
-    </a>
-    <div class="footer-links">
-      <a href="features.html">Features</a>
-      <a href="setup.html">Setup</a>
-      <a href="download.html">Download</a>
-      <a href="index.html#faq">FAQ</a>
-      <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
-      <a href="terms.html">Terms of Use</a>
-      <a href="terms.html#privacy">Privacy</a>
-    </div>
-    <p class="footer-note">Revox is an independent project and is not affiliated with Roblox Corporation. Roblox is a trademark of Roblox Corporation.</p>
-  </div>
-</footer>
+  </footer>
 </body>
 </html>
