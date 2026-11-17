@@ -1,93 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0B0E13">
-<title>Download Revox</title>
-<meta property="og:type" content="website">
-<meta property="og:title" content="Download Revox">
-<meta property="og:description" content="Download Revox Client for Windows. Installer or portable version.">
-<meta name="description" content="Download Revox Client for Windows. Installer or portable version.">
-<link rel="canonical" href="https://revoxclient.vercel.app/download.html">
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="apple-touch-icon" href="Logo.PNG">
-<link rel="stylesheet" href="assets/style.css">
-<meta property="og:image" content="https://revoxclient.vercel.app/assets/og-image.png">
-<meta property="og:url" content="https://revoxclient.vercel.app/download.html">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Download — Revox</title>
+  <meta name="description" content="Download Revox Client for Windows. Installer or portable version.">
+  <link rel="canonical" href="https://revox-client.vercel.app/download">
+  <meta name="theme-color" content="#050806">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Revox">
+  <meta property="og:title" content="Download — Revox">
+  <meta property="og:description" content="Download Revox Client for Windows. Installer or portable version.">
+  <meta property="og:url" content="https://revox-client.vercel.app/download">
+  <meta property="og:image" content="https://revox-client.vercel.app/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/logo-180.png">
+  <link rel="preload" href="assets/aqx/fonts/bodoni-moda-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/aqx/fonts/inter-tight-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/aqx/aqx.css">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/aqx/boot.js"></script>
+  <script type="module" src="assets/aqx/aqx.js"></script>
 </head>
 <body>
+  <a class="skip" href="#main">Skip to content</a>
+  <canvas class="aqx-sky" aria-hidden="true"></canvas>
+  <div class="aqx-aura" aria-hidden="true"></div>
+  <div class="aqx-progress" aria-hidden="true"></div>
 
-<header class="site-header">
-  <div class="container">
-    <a class="brand" href="index.html">
-      <svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5BC8F5"/><stop offset="100%" stop-color="#1874FF"/></linearGradient></defs><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
-      REVOX
-    </a>
-    <nav class="site-nav">
-      <a class="nav-link" href="features.html">Features</a>
-      <a class="nav-link" href="setup.html">Setup</a>
-      <a class="nav-link" href="index.html#compare">Compare</a>
-      <a class="nav-link" href="index.html#faq">FAQ</a>
-      <a class="nav-link" href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
-      <a class="btn btn-primary btn-nav" href="download.html">Download</a>
-    </nav>
-  </div>
-</header>
+  <header class="nav" data-stuck="false" data-open="false">
+    <div class="nav-inner">
+      <a class="brand" href="./" aria-label="Revox home"><img src="favicon.svg" alt="" width="32" height="32"><span>Revox</span></a>
+      <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-links"><span></span></button>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="features">Features</a></li>
+        <li><a href="setup">Setup</a></li>
+        <li><a href="./#compare">Compare</a></li>
+        <li><a href="./#faq">FAQ</a></li>
+        <li><a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a></li>
+        <li><a class="btn btn-primary btn-sm" href="download">Download</a></li>
+      </ul>
+    </div>
+  </header>
 
-<main>
-<section class="hero" style="padding-bottom:32px">
-  <div class="container">
-
-    <div class="download-panel">
-      <svg class="hero-logo" viewBox="0 0 100 100" aria-label="Revox logo"><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
-      <h1 class="download-title">Download Revox</h1>
-      <p class="download-sub">For Windows. Installer or portable.</p>
-
-      <div class="download-row">
-        <a class="btn btn-primary btn-large" href="https://github.com/aquaxs1/Revox-Client/releases/latest">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
-          Download the latest release
-        </a>
+  <main id="main">
+<header class="page-head">
+      <div class="stage" data-scene="assets/scene.js" data-mode="mini" aria-hidden="true"><canvas></canvas></div>
+      <div class="page-head-inner">
+        <span class="eyebrow">Download</span>
+        <h1>Download <em>Revox</em></h1>
+        <p class="lead">For Windows. Installer or portable.</p>
+        <div class="btn-row"><a class="btn btn-primary" href="https://github.com/aquaxs1/Revox-Client/releases/latest" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>Download the latest release</a></div>
       </div>
+    </header>
 
-      <p class="dl-status">Always the newest build. The release page lists the installer, the
-        portable archive and the checksums for both.</p>
+    <section class="sec" id="download">
+      <div class="wrap">
+        <div class="note reveal">
+          <p>Always the newest build. The release page lists the installer, the portable archive and the checksums for both.</p>
+        </div>
+        <div class="cards" data-cols="4">
+          <article class="card reveal">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span>
+            <h3>Installs in seconds</h3>
+            <p>Set up for your user account, no admin rights needed.</p>
+          </article>
+          <article class="card reveal">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg></span>
+            <h3>Light on disk</h3>
+            <p>Built with Tauri, so the download stays small and the app starts fast.</p>
+          </article>
+          <article class="card reveal">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.200 3 14.800 0 18M12 3c-3 3.200-3 14.800 0 18"/></svg></span>
+            <h3>English and German</h3>
+            <p>Pick your language in the installer and switch any time inside the app.</p>
+          </article>
+          <article class="card reveal">
+            <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.6-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5L20 16M20 20v-4h-4"/></svg></span>
+            <h3>Update check</h3>
+            <p>Settings tells you when a new version is out; you install it yourself from this page.</p>
+          </article>
+        </div>
+        <p class="fineprint">All versions and changelogs: <a class="textlink" href="https://github.com/aquaxs1/Revox-Client/releases" rel="noopener">GitHub releases</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-about">
+          <a class="brand" href="./"><img src="favicon.svg" alt="" width="32" height="32" loading="lazy"><span>Revox</span></a>
+          <p>A desktop launcher for the official Roblox client: your games, stats and friends in one place.</p>
+        </div>
+        <nav class="footer-col" aria-label="Revox">
+          <h2>Revox</h2>
+          <ul>
+            <li><a href="features">Features</a></li>
+            <li><a href="setup">Setup</a></li>
+            <li><a href="download">Download</a></li>
+            <li><a href="./#faq">FAQ</a></li>
+          </ul>
+        </nav>
+        <nav class="footer-col" aria-label="Project">
+          <h2>Project</h2>
+          <ul>
+            <li><a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a></li>
+            <li><a href="https://github.com/aquaxs1/Revox-Client/releases" rel="noopener">Releases</a></li>
+            <li><a href="https://github.com/aquaxs1/Revox-Client/issues" rel="noopener">Report a problem</a></li>
+          </ul>
+        </nav>
+        <nav class="footer-col" aria-label="Legal">
+          <h2>Legal</h2>
+          <ul>
+            <li><a href="terms">Terms of Use</a></li>
+            <li><a href="terms#privacy">Privacy</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="family">
+        <span class="family-label">More by AquAxs</span>
+        <ul>
+          <li><a href="https://aqua.is-a.dev/portfolio" data-home rel="noopener">All projects</a></li>
+          <li><a href="https://pfpair.app/" rel="noopener">Pfpair</a></li>
+          <li><a href="https://handled-market.vercel.app/" rel="noopener">Handled</a></li>
+          <li><a href="https://larpcorddc.vercel.app/" rel="noopener">Larpcord</a></li>
+          <li><a href="https://mybluejarvis.vercel.app/" rel="noopener">My Jarvis</a></li>
+          <li><a href="https://guardiantus-av.vercel.app/" rel="noopener">Guardiantus AV</a></li>
+          <li><a href="https://explorer-manager.vercel.app/" rel="noopener">Explorer Manager</a></li>
+          <li><a href="https://cipher-box-file-encrypter.vercel.app/" rel="noopener">CipherBox</a></li>
+          <li><a href="https://easy-cloner.vercel.app/" rel="noopener">Easy Server Cloner</a></li>
+          <li><a href="https://simple-skin.vercel.app/" rel="noopener">Simple Skin</a></li>
+          <li><a href="https://autobuild-gui.vercel.app/" rel="noopener">Autobuild GUI</a></li>
+          <li><a href="https://timetrackerextension.vercel.app/" rel="noopener">WebsiteTimeTrack</a></li>
+          <li><a href="https://wave-uninstaller.vercel.app/" rel="noopener">Wave Uninstaller</a></li>
+          <li><a href="https://discord-sakurabot.vercel.app/" rel="noopener">Sakura Bot</a></li>
+          <li><a href="https://chesstrainer.cc.cd/" rel="noopener">Chess Trainer</a></li>
+        </ul>
+      </div>
+      <div class="footer-legal">
+        <p>© 2026 AquAxs · MIT licence</p>
+        <p>Revox is an independent project and is not affiliated with Roblox Corporation. Roblox is a trademark of Roblox Corporation.</p>
+      </div>
     </div>
-
-    <div class="download-facts">
-      <p class="fact"><span><b>Installs in seconds.</b> Set up for your user account, no admin rights needed.</span></p>
-      <p class="fact"><span><b>Light on disk.</b> Built with Tauri, so the download stays small and the app starts fast.</span></p>
-      <p class="fact"><span><b>English and German.</b> Pick your language in the installer and switch any time inside the app.</span></p>
-      <p class="fact"><span><b>Update check.</b> Settings tells you when a new version is out; you install it yourself from this page.</span></p>
-    </div>
-
-    <p class="center download-releases">All versions and changelogs: <a href="https://github.com/aquaxs1/Revox-Client/releases" rel="noopener">GitHub releases</a></p>
-  </div>
-</section>
-</main>
-
-<footer class="site-footer">
-  <div class="container">
-    <a class="footer-brand" href="index.html">
-      <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="url(#rg)" fill-rule="evenodd" d="M0 0 H57 C80 0 100 12 100 31 C100 48 85 62 68 62 L100 100 H0 Z M47 14 L69 32 L47 50 L25 32 Z M19 62 H40 L57 79 H17 Z"/></svg>
-      REVOX
-    </a>
-    <div class="footer-links">
-      <a href="features.html">Features</a>
-      <a href="setup.html">Setup</a>
-      <a href="download.html">Download</a>
-      <a href="index.html#faq">FAQ</a>
-      <a href="https://github.com/aquaxs1/Revox-Client" rel="noopener">GitHub</a>
-      <a href="terms.html">Terms of Use</a>
-      <a href="terms.html#privacy">Privacy</a>
-    </div>
-    <p class="footer-note">Revox is an independent project and is not affiliated with Roblox Corporation. Roblox is a trademark of Roblox Corporation.</p>
-  </div>
-</footer>
-
+  </footer>
 </body>
 </html>

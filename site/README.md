@@ -1,56 +1,59 @@
-# Revox Client — website
+# Revox — website
 
-The marketing site for [Revox Client](https://github.com/aquaxs1/Revox-Client),
-a desktop launcher for the official Roblox client. Plain HTML and CSS, no build
-step, deployed on Vercel to <https://revoxclient.vercel.app>.
+The site at <https://revox-client.vercel.app>. Plain HTML, CSS and JavaScript: no build
+step, no framework, nothing loaded from another host.
 
-It lives in the `site/` folder of the app's repository; nothing outside this
-folder is part of the site.
+| File | What it is |
+| --- | --- |
+| `index.html` | Landing page |
+| `features.html` | Features |
+| `setup.html` | Setup |
+| `download.html` | Download |
+| `terms.html` | Terms of Use |
+| `404.html` | Shown for any address that does not exist |
+| `assets/site.css` | This project's accent colour and anything only this site needs |
+| `assets/scene.js` | The 3D scene in the page header |
+| `assets/aqx/` | The look and behaviour shared by all AquAxs project sites |
 
-## Layout
+## The shared part
 
-```
-index.html         the landing page: positioning, comparison table, FAQ
-features.html      what the app does, in detail
-setup.html         installing and first run
-download.html      links to the latest GitHub release
-terms.html         terms of use
-404.html           not-found page
-assets/style.css   the whole stylesheet
-assets/og-image.png  the social preview
-Logo.PNG           the app icon, also used as the apple-touch-icon
-favicon.svg        the favicon
-sitemap.xml        every page listed above
-robots.txt
-vercel.json        security headers, clean-URL and caching rules
-Revoxclient-info.txt  what the app is and does — the source for the copy
-Website-info.txt      the brief this site was written from
-```
+`assets/aqx/` is the same in every project site: the stylesheet (`aqx.css`),
+the interactions (`aqx.js`), the 3D stage (`stage.js`), three.js and the three
+typefaces. It follows the portfolio at aqua.is-a.dev: a black sky with slow
+dots, glass cards that lean towards the pointer, Bodoni Moda headlines.
+Change the accent in `assets/site.css` (`--ac`, `--ac-hi`), not in `aqx.css`.
 
-## Working on it
+## The 3D scene
 
-There is nothing to install. Open a page in a browser, or serve the folder:
+`assets/scene.js` exports one function that builds its objects into
+`stage.frame`. The stage (`assets/aqx/stage.js`) does the rest: camera, lights,
+resizing, pointer and touch, pausing off screen. With reduced motion the scene
+is one still frame; without WebGL a glow in the accent colour stays instead.
+
+## Preview
+
+Links have no `.html` (Vercel serves `/download` from `download.html`), so open
+the folder through a server that does the same:
 
 ```bash
-cd site
-python3 -m http.server 8000
+npx serve site
 ```
 
-`vercel.json` has `cleanUrls: false`, so links keep their `.html` ending. When
-you add a page, add it to `sitemap.xml` and give it a `<link rel="canonical">`
-pointing at its own URL.
+## Deploy
 
-## Deploying
-
-In the Vercel project, set **Root Directory** to `site` (Settings → Build and
-Deployment), framework preset **Other**, build and output commands empty.
-Vercel then deploys from `main` on every push and serves this folder as it is.
+Vercel, root directory `site`, no build command. `vercel.json` sets clean URLs
+and the security headers. The site sets no cookies and stores nothing.
 
 ## Tone
 
 Direct, technical, honest. No hype, no invented numbers. Revox's whole
 positioning is that it does not modify the Roblox client, so the site only ever
-claims what the app actually does. `Website-info.txt` spells this out.
+claims what the app actually does. The brief the copy was written from —
+features, brand tokens and the list of things the site must not claim — is
+[`docs/website/README.md`](../docs/website/README.md) in this repository.
+
+The game and friend names in the 3D scene and in the picture of the Play
+screen are made up.
 
 ## Licence
 

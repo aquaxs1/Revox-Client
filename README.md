@@ -219,9 +219,10 @@ that as a normal download — old installs cannot auto-update across a key chang
 
 ## Website
 
-The marketing site (<https://revoxclient.vercel.app>) lives in [`site/`](site):
-plain HTML and CSS, no build step. Vercel deploys it with its Root Directory set
-to `site`; see [`site/README.md`](site/README.md).
+The marketing site (<https://revox-client.vercel.app>) lives in [`site/`](site):
+plain HTML, CSS and JavaScript, no build step. It shares its look and its 3D
+stage with the other AquAxs project sites (`site/assets/aqx/`). Vercel deploys
+it with its Root Directory set to `site`; see [`site/README.md`](site/README.md).
 
 `docs/website/README.md` is the standalone brief the site was written from:
 every feature, the brand tokens, the logo path, the page structure and —

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://revoxclient.vercel.app/sitemap.xml
+Sitemap: https://revox-client.vercel.app/sitemap.xml

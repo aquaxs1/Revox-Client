@@ -1,0 +1,132 @@
+/* Revox — the blue of its mark. Everything else is assets/aqx/aqx.css. */
+
+:root {
+  --ac: #3d9bff;
+  --ac-hi: #9bd6ff;
+  --ac-ink: #021226;
+}
+
+/* The headline is a whole sentence: one size down. */
+.hero h1 {
+  font-size: clamp(2.4rem, 3.9vw + 0.9rem, 4.6rem);
+}
+
+/* An illustration of the Play screen: last game, favourites, last sessions. */
+.app-window {
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 1.3rem;
+}
+
+@media (max-width: 620px) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.app-hero {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1.1rem 1.1rem 1rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ac) 40%, transparent);
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--ac) 55%, transparent), transparent 60%),
+    linear-gradient(135deg, #10203a, #0b0e13);
+}
+
+.app-hero b {
+  font-size: 1.15rem;
+}
+
+.app-hero small,
+.app-session small {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.app-play {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #5bc8f5, #1874ff);
+  color: #021226;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.app-play svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.app-favs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.app-favs span {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.app-favs i {
+  aspect-ratio: 16 / 10;
+}
+
+.app-session i {
+  aspect-ratio: 1;
+}
+
+.app-favs i,
+.app-session i {
+  display: block;
+  border-radius: 10px;
+  border: 1px solid var(--line-soft);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ac) 40%, #0b0e13), #0b0e13);
+}
+
+.app-sessions {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.app-session {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-session span {
+  display: grid;
+  min-width: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.app-session em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ac-hi);
+}
