@@ -73,7 +73,15 @@ jobs:
             key="$(printf '%s' "$key" | base64 -w0)"
           fi
           key="$(printf '%s' "$key" | tr -d ' \n')"
-          if [ -n "$key" ] && printf '%s' "$key" | base64 -d 2>/dev/null | head -c 18 | grep -q '^untrusted comment'; then
+          # Decode the whole key the way Tauri does: base64 -> UTF-8 text ->
+          # "untrusted comment" line plus a base64 key line. A key that only
+          # starts right (mangled further in) must count as unusable too.
+          if [ -n "$key" ] && KEY_B64="$key" node -e '
+            const text = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.from(process.env.KEY_B64, "base64"));
+            const lines = text.trim().split(/\r?\n/);
+            if (lines.length !== 2 || !lines[0].startsWith("untrusted comment:")) process.exit(1);
+            if (!/^[A-Za-z0-9+/]+=*$/.test(lines[1]) || Buffer.from(lines[1], "base64").length < 100) process.exit(1);
+          ' 2>/dev/null; then
             echo "::add-mask::$key"
             echo "usable=true" >> "$GITHUB_OUTPUT"
             { echo "TAURI_SIGNING_PRIVATE_KEY<<KEYEOF"; echo "$key"; echo "KEYEOF"; } >> "$GITHUB_ENV"
