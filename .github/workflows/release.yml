@@ -55,11 +55,39 @@ jobs:
           npm test -- --run
           cargo test --manifest-path src-tauri/Cargo.toml
 
+      # The updater key is optional for getting a release out. A missing or
+      # mangled secret used to fail the whole run after the build had already
+      # succeeded, so nothing was ever published. Now a bad key only drops the
+      # signed auto-update files: the installer and portable exe still ship.
+      #
+      # Accepted: the base64 string `tauri signer generate` prints (the normal
+      # case), or the raw contents of the .key file, which is encoded here.
+      - name: Check the updater signing key
+        id: key
+        shell: bash
+        env:
+          KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          key="$(printf '%s' "$KEY" | tr -d '\r')"
+          if printf '%s' "$key" | head -c 18 | grep -q '^untrusted comment'; then
+            key="$(printf '%s' "$key" | base64 -w0)"
+          fi
+          key="$(printf '%s' "$key" | tr -d ' \n')"
+          if [ -n "$key" ] && printf '%s' "$key" | base64 -d 2>/dev/null | head -c 18 | grep -q '^untrusted comment'; then
+            echo "::add-mask::$key"
+            echo "usable=true" >> "$GITHUB_OUTPUT"
+            { echo "TAURI_SIGNING_PRIVATE_KEY<<KEYEOF"; echo "$key"; echo "KEYEOF"; } >> "$GITHUB_ENV"
+            echo "Signing key found: this release carries signed auto-update files."
+          else
+            echo "usable=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Release is not signed for auto-update::TAURI_SIGNING_PRIVATE_KEY is missing or is not a minisign private key. The installer and portable exe are published, but installed copies will not be offered this release as an update. Paste the key again (see README, Releasing) and run the workflow for the next version."
+          fi
+
       - name: Build, sign and publish
+        if: steps.key.outputs.usable == 'true'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v${{ github.event.inputs.version || github.ref_name }}
@@ -76,6 +104,24 @@ jobs:
           # config override, so it only ever demands a signing key in this
           # workflow. A plain local `tauri build` needs no key at all.
           args: --bundles nsis --target x86_64-pc-windows-msvc --config src-tauri/tauri.release.conf.json
+
+      - name: Build and publish without updater signature
+        if: steps.key.outputs.usable != 'true'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v${{ github.event.inputs.version || github.ref_name }}
+          releaseName: Revox Client v${{ github.event.inputs.version || github.ref_name }}
+          releaseBody: |
+            **Revox-Client_*_x64-setup.exe** — installer, German/English, no admin rights needed.
+            **Revox-Client-Portable.exe** — single file, no installation.
+
+            Needs the Microsoft Edge WebView2 runtime, which Windows 10 and 11
+            already ship. The installer fetches it automatically if it is missing.
+          releaseDraft: false
+          prerelease: false
+          args: --bundles nsis --target x86_64-pc-windows-msvc
 
       # The raw binary is a standalone portable build; the release above only
       # carries the installer, so it is attached separately under a clear name.
